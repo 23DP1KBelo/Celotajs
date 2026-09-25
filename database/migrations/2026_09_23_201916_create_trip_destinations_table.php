@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->boolean('recommendations')->default(0);
             $table->foreignId('trip_id')->references('id')->on('trips');
-            $table->foreignId('destinantion_id')->references('id')->on('destinations');
+            $table->foreignId('destination_id')->references('id')->on('destinations');
             $table->timestamps();
         });
     }
