@@ -1,8 +1,13 @@
 <template>
-    <div>
-        <h1>Sveiks no Laravel + Vue! 🚀</h1>
-    </div>
-</template>
+    <v-app>
+        <v-main>
+            <v-container>
+                <h1>Vuetify darbojas!</h1>
 
-<script setup>
-</script>
+                <v-btn color="primary">
+                    Poga
+                </v-btn>
+            </v-container>
+        </v-main>
+    </v-app>
+</template>
