@@ -20,4 +20,12 @@ class Trip extends Model
         'image',
         'user_id',
     ];
+
+    public function users() {
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    public function TripDestinantion() {
+        return $this->hasMany(TripDestination::class);
+    }
 }

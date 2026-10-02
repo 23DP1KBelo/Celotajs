@@ -23,7 +23,19 @@ class DestinationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'title' => 'required|max:255',
+            'description' => 'nullable|string',
+            'place_id' => 'required|exists:places,id',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'title.required' => 'Title is required.',
+            'title.max' => 'Title cannot exceed 255 characters.',
+            'place_id.required' => 'Place ID is required.',
+            'place_id.exists' => 'Place ID must exist in the places table.',
         ];
     }
 }

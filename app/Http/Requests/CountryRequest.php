@@ -12,7 +12,7 @@ class CountryRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -23,7 +23,18 @@ class CountryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'name' => 'required|max:255',
+            'country_code' => 'required|max:2'
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Name is required.',
+            'name.max' => 'Name cannot exceed 255 characters.',
+            'country_code.required' => 'Country code is required.',
+            'country_code.max' => 'Country code cannot exceed 2 characters.'
         ];
     }
 }

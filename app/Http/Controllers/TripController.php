@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Http\Requests\TripRequest;
+use App\Models\Trip;
+use App\Models\TripDestination;
 
 class TripController extends Controller
 {
@@ -11,15 +14,19 @@ class TripController extends Controller
      */
     public function index()
     {
-        //
+        $trips = Trip::with(['destinations', 'destinations.place', 'destinations.place.country'])->get();
+        return response()->json($trips);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(TripRequest $request)
     {
-        //
+        $validated = $request->validated();
+
+        $trip = Trip::create($validated);
+        return response()->json($trip, 201);
     }
 
     /**

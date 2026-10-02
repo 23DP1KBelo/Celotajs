@@ -14,6 +14,18 @@ class TripResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'title' => $this->name,
+            'description' => $this->description,
+            'user_id' => $this->user_id,
+            'date_form' => $this->date_from,
+            'date_till' => $this->date_till,
+            'budget' => $this->budget,
+            'status' => $this->status,
+            'category' => $this->category,
+            'image' => $this->image,
+            'destinations' => DestinationResource::collection($this->whenLoaded('Destinations'))
+        ];
     }
 }

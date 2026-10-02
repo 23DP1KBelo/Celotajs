@@ -12,7 +12,7 @@ class PlaceRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -23,7 +23,18 @@ class PlaceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'name' => 'required|max:255',
+            'country_id' => 'required|exists:countries,id',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Name is required.',
+            'name.max' => 'Name cannot exceed 255 characters.',
+            'country_id.required' => 'Country ID is required.',
+            'country_id.exists' => 'Country ID must exist in the countries table.',
         ];
     }
 }
