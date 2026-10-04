@@ -17,25 +17,24 @@ class UserRequest extends FormRequest
         return [
             'Username' => 'required|string|max:255|unique:users,Username',
             'email' => 'required|email|max:255|unique:users,email',
-            'password' => 'required|string|min:8|max:255|confirmed',
+            'password' => 'required|string|min:8|max:255',
         ];
     }
 
     public function messages(): array
-    {
-        return [
-            'Username.required' => 'Lietotājvārds ir obligāts.',
-            'Username.max' => 'Lietotājvārds nedrīkst pārsniegt 255 rakstzīmes.',
-            'Username.unique' => 'Šāds lietotājvārds jau eksistē.',
+{
+    return [
+        'Username.required' => 'Username is required.',
+        'Username.max' => 'Username must not exceed 255 characters.',
+        'Username.unique' => 'This username already exists.',
 
-            'email.required' => 'E-pasts ir obligāts.',
-            'email.email' => 'Ievadiet derīgu e-pasta adresi.',
-            'email.unique' => 'Šāds e-pasts jau tiek izmantots.',
+        'email.required' => 'Email is required.',
+        'email.email' => 'Please enter a valid email address.',
+        'email.unique' => 'This email is already in use.',
 
-            'password.required' => 'Parole ir obligāta.',
-            'password.min' => 'Parolei jābūt vismaz 8 rakstzīmes garai.',
-            'password.max' => 'Parole nedrīkst pārsniegt 255 rakstzīmes.',
-            'password.confirmed' => 'Paroles nesakrīt.',
-        ];
-    }
+        'password.required' => 'Password is required.',
+        'password.min' => 'Password must be at least 8 characters long.',
+        'password.max' => 'Password must not exceed 255 characters.',
+    ];
+}
 }

@@ -87,6 +87,7 @@ export default {
                 console.log(response.data)
 
                 this.message = 'Login successful!'
+                this.$router.push('/')
 
             } catch (error) {
                 console.log(error.response)

@@ -78,7 +78,6 @@ export default {
             Username: '',
             email: '',
             password: '',
-            password_confirmation: '',
             message: ''
         }
     },
@@ -101,6 +100,7 @@ export default {
                 console.log(response.data)
 
                 this.message = 'Registration successful!'
+                this.$router.push('/login')
 
             } catch (error) {
                 console.log(error.response)
