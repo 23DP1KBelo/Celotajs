@@ -123,7 +123,7 @@ export default {
 
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
-    min-height: 100vh;
+    min-height: calc(100vh - 4.5rem);
     background: #fff;
     color: #000;
     font-family: 'Jost', system-ui, sans-serif;
