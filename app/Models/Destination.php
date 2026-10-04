@@ -12,11 +12,13 @@ class Destination extends Model
         'places_id'
     ];
 
-    public function places() {
+    public function place()
+    {
         return $this->belongsTo(Place::class, 'places_id', 'id');
     }
 
-    public function tripDestinations() {
+    public function tripDestinations()
+    {
         return $this->hasMany(TripDestination::class);
     }
 }

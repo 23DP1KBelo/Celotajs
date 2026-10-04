@@ -44,14 +44,14 @@ class AuthController extends Controller
 
         if (!Auth::attempt($credentials)) {
             return response()->json([
-                'message' => 'Nepareizs lietotājvārds vai parole.'
+                'message' => 'Not correct username or password!'
             ], 401);
         }
 
         $request->session()->regenerate();
 
         return response()->json([
-            'message' => 'Veiksmīgi ielogojāties!',
+            'message' => 'Loged in!',
             'user' => new UserResource(Auth::user()),
         ]);
     }
@@ -71,7 +71,7 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return response()->json([
-            'message' => 'Veiksmīgi izrakstījāties!'
+            'message' => 'Loged out!'
         ]);
     }
 }

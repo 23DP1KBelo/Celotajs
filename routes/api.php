@@ -1,7 +1,10 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\TripDestinationController;
+use Illuminate\Support\Facades\Route;
+
+Route::get('/trip-destinations/recommendations', [TripDestinationController::class, 'recommendations']);
 
 Route::middleware('web')->group(function () {
 

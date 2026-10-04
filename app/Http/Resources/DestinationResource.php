@@ -7,20 +7,18 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class DestinationResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(Request $request): array
     {
         return [
             'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
-            'place_id' => $this->place_id,
+            'places_id' => $this->places_id,
             'created_at' => $this->created_at,
-            'place' => new PlaceResource($this->whenLoaded('Place')),
+
+            'place' => new PlaceResource(
+                $this->whenLoaded('places')
+            ),
         ];
     }
 }

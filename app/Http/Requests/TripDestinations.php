@@ -12,7 +12,7 @@ class TripDestinations extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -28,6 +28,8 @@ class TripDestinations extends FormRequest
             'destination_id' => 'required|exists:destinations,id',
         ];
     }
+    
+
 
     public function messages(): array
     {
