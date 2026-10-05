@@ -5,6 +5,7 @@ use App\Http\Controllers\TripDestinationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/trip-destinations/recommendations', [TripDestinationController::class, 'recommendations']);
+Route::get('/recommendations/search', [TripDestinationController::class,'searchRecommendations']);
 
 Route::middleware('web')->group(function () {
 

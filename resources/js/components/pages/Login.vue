@@ -87,7 +87,7 @@ export default {
                 console.log(response.data)
 
                 this.message = 'Login successful!'
-                this.$router.push('/')
+                this.$router.push('/profile')
 
             } catch (error) {
                 console.log(error.response)

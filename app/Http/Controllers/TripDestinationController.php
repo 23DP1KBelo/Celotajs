@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Resources\DestinationResource;
 use App\Models\TripDestination;
+use Illuminate\Http\Request;
+use App\Models\Destination;
+use App\Http\Resources\TripDestinations;
 
 class TripDestinationController extends Controller
 {
@@ -24,6 +27,31 @@ class TripDestinationController extends Controller
         //
     }
 
+    public function searchRecommendations(Request $request)
+    {
+        $search = $request->input('search');
+
+        $recommendations = TripDestination::with([
+            'destination.place.country'
+        ])
+        ->where('recommendations', true)
+        ->whereHas('destination', function ($query) use ($search) {
+
+            $query->where('title', 'LIKE', '%' . $search . '%')
+
+                ->orWhereHas('place', function ($query) use ($search) {
+
+                    $query->where('name', 'LIKE', '%' . $search . '%')
+
+                        ->orWhereHas('country', function ($query) use ($search) {
+                            $query->where('name', 'LIKE', '%' . $search . '%');
+                        });
+                });
+        })
+        ->get();
+
+        return TripDestinations::collection($recommendations);
+    }
     /**
      * Store a newly created resource in storage.
      */

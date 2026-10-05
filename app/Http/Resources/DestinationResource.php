@@ -11,13 +11,12 @@ class DestinationResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'name' => $this->name,
+            'title' => $this->title,
             'description' => $this->description,
             'places_id' => $this->places_id,
             'created_at' => $this->created_at,
-
             'place' => new PlaceResource(
-                $this->whenLoaded('places')
+                $this->whenLoaded('place')
             ),
         ];
     }
