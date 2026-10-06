@@ -19,13 +19,13 @@
 
                 <form class="login__form" @submit.prevent="login">
                     <div class="field">
-                        <label for="email">EMAIL</label>
+                        <label for="email">USERNAME</label>
                         <input
                             id="email"
                             v-model="Username"
                             type="text"
                             autocomplete="username"
-                            placeholder="YOU@EXAMPLE.COM"
+                            placeholder="YOUR USERNAME"
                         >
                     </div>
 
