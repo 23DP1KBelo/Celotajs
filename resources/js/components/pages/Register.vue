@@ -19,7 +19,7 @@
 
                 <form class="register__form" @submit.prevent="register">
                     <div class="field">
-                        <label for="name">FULL NAME</label>
+                        <label for="name">USERNAME</label>
                         <input
                             id="name"
                             v-model="Username"
