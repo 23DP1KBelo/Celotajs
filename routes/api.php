@@ -2,20 +2,33 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\TripDestinationController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/trip-destinations/recommendations', [TripDestinationController::class, 'recommendations']);
-Route::get('/recommendations/search', [TripDestinationController::class,'searchRecommendations']);
+Route::get('/recommendations/search', [TripDestinationController::class, 'searchRecommendations']);
 
-Route::middleware('web')->group(function () {
+// Authentication
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
 
-    Route::post('/register', [AuthController::class, 'register']);
+Route::middleware('auth:sanctum')->group(function () {
 
-    Route::post('/login', [AuthController::class, 'login']);
+    // Current user
+    Route::get('/me', [AuthController::class, 'me']);
 
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::get('/me', [AuthController::class, 'me']);
-        Route::post('/logout', [AuthController::class, 'logout']);
-    });
+    // Logout
+    Route::post('/logout', [AuthController::class, 'logout']);
 
+    // Profile
+    Route::get('/profile', [UserController::class, 'show']);
+
+    // Change email
+    Route::put('/profile/email', [UserController::class, 'update']);
+   
+    // Delete profile
+    Route::delete('/profile', [UserController::class, 'destroy']);
+
+    // Change password
+    Route::put('/profile/password', [UserController::class, 'changePassword']);
 });

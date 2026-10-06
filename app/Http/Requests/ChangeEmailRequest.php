@@ -1,0 +1,36 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class ChangeEmailRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($this->user()->id),
+            ],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'email.required' => 'Email is required.',
+            'email.email' => 'Please enter a valid email address.',
+            'email.unique' => 'This email is already in use.',
+            'email.max' => 'Email must not exceed 255 characters.',
+        ];
+    }
+}

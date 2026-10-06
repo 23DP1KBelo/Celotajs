@@ -30,29 +30,27 @@ class AuthController extends Controller
         ], 201);
     }
 
-    public function login(Request $request)
+   public function login(Request $request)
     {
-        $request->validate([
+        $credentials = $request->validate([
             'Username' => 'required|string',
             'password' => 'required|string',
         ]);
 
-        $credentials = [
-            'Username' => $request->Username,
-            'password' => $request->password,
-        ];
+        $user = User::where('Username', $credentials['Username'])->first();
 
-        if (!Auth::attempt($credentials)) {
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
             return response()->json([
-                'message' => 'Not correct username or password!'
+                'message' => 'Invalid username or password.'
             ], 401);
         }
 
-        $request->session()->regenerate();
+        $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
-            'message' => 'Loged in!',
-            'user' => new UserResource(Auth::user()),
+            'message' => 'Login successful.',
+            'user' => $user,
+            'token' => $token,
         ]);
     }
 

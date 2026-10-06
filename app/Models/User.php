@@ -15,7 +15,6 @@ use Laravel\Sanctum\HasApiTokens;
 #[Hidden(['password'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
     protected function casts(): array
@@ -28,5 +27,14 @@ class User extends Authenticatable
     public function trips(): HasMany
     {
         return $this->hasMany(Trip::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (User $user) {
+            foreach ($user->trips as $trip) {
+                $trip->delete();
+            }
+        });
     }
 }
