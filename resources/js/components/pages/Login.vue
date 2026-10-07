@@ -59,6 +59,7 @@
 </template>
 
 <script>
+import { fetchUser } from '../../auth.js'
 import axios from 'axios'
 
 export default {
@@ -85,6 +86,8 @@ export default {
                 })
 
                 console.log(response.data)
+                await fetchUser()
+                this.$router.push('/')
 
                 this.message = 'Login successful!'
                 this.$router.push('/profile')
