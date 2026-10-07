@@ -1,10 +1,20 @@
 <script setup>
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { auth, fetchUser, logout } from '../auth.js'
 
 const route = useRoute()
+const router = useRouter()
 
 const showHeader = computed(() => !route.meta.hideHeader)
+const isLoggedIn = computed(() => !!auth.user)
+
+onMounted(fetchUser)
+
+async function handleLogout() {
+    await logout()
+    router.push('/')
+}
 </script>
 <template>
     <v-app>
@@ -18,8 +28,17 @@ const showHeader = computed(() => !route.meta.hideHeader)
  
         <div class="header__right">
             <span class="header__lang">EN | LV</span>
-            <router-link to="/login" class="pill pill--dark">LOG IN</router-link>
-            <router-link to="/register" class="pill pill--light">SIGN UP</router-link>
+
+            <template v-if="auth.loaded">
+                <template v-if="!isLoggedIn">
+                    <router-link to="/login" class="pill pill--dark">LOG IN</router-link>
+                    <router-link to="/register" class="pill pill--light">SIGN UP</router-link>
+                </template>
+
+                <button v-else type="button" class="pill pill--light" @click="handleLogout">
+                    LOG OUT
+                </button>
+            </template>
         </div>
     </header>
 
@@ -74,6 +93,12 @@ const showHeader = computed(() => !route.meta.hideHeader)
 .header a:focus-visible {
     outline: 2px solid #5aa9e6;
     outline-offset: 3px;
+}
+button.pill {
+    background: transparent;
+    color: #000;
+    font: inherit;
+    cursor: pointer;
 }
  
 @media (max-width: 760px) {

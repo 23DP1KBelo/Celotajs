@@ -1,5 +1,11 @@
 <template>
     <main class="place">
+        <transition name="toast">
+            <div v-if="toast" class="toast" role="alert">
+                <span>Please register to add destination</span>
+                <router-link to="/register">REGISTER</router-link>
+            </div>
+        </transition>
         <div class="place__inner">
             <router-link to="/discover" class="place__back">
                 <svg width="30" height="8" viewBox="0 0 30 8" aria-hidden="true">
@@ -19,12 +25,12 @@
                         type="button"
                         class="place__add"
                         :class="{ 'place__add--on': added }"
-                        :aria-pressed="added"
-                        @click="toggleList"
+                        :disabled="added"
+                        @click="addToList"
                     >
                         {{ added ? '✓ IN MY LIST' : '+ ADD TO MY LIST' }}
                     </button>
-                </header>
+                    </header>
 
                 <img class="place__img" :src="place.image" :alt="place.title">
 
@@ -241,6 +247,45 @@ export default {
 .place__missing {
     margin: 4rem 0;
     font-size: 0.9rem;
+}
+
+.place__add:disabled {
+    cursor: default;
+}
+
+.toast {
+    position: fixed;
+    top: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1rem 1.8rem;
+    border-radius: 999px;
+    background: #000;
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 400;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+}
+
+.toast a {
+    color: #8cc4f0;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.toast-enter-active,
+.toast-leave-active {
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.toast-enter-from,
+.toast-leave-to {
+    opacity: 0;
+    transform: translate(-50%, -1rem);
 }
 
 /* ---------- Mobile ---------- */
