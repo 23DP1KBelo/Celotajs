@@ -8,26 +8,53 @@ const route = useRoute()
 const router = useRouter()
 
 const showHeader = computed(() => !route.meta.hideHeader)
-const isLoggedIn = computed(() => !!auth.user)
+const isLoggedIn = computed(() => Boolean(auth.user))
 
-onMounted(fetchUser)
+onMounted(async () => {
+    try {
+        await fetchUser()
+    } catch (error) {
+        console.error('Neizdevās ielādēt lietotāja datus:', error)
+    }
+})
 
 async function handleLogout() {
-    await logout()
-    router.push('/')
+    try {
+        await logout()
+        await router.push('/')
+    } catch (error) {
+        console.error('Neizdevās izrakstīties:', error)
+    }
 }
 </script>
 
 <template>
     <v-app>
         <header v-if="showHeader" class="header">
-            <nav class="header__nav" aria-label="Main">
-                <router-link to="/discover">DISCOVER</router-link>
-                <router-link to="/add-destination">
-                    ADD DESTINATION
+            <nav class="header__nav" aria-label="Main navigation">
+                <router-link to="/" class="header__link">
+                    HOME
                 </router-link>
-                <router-link to="/profile">PROFILE</router-link>
-    
+
+                <router-link to="/discover" class="header__link">
+                    DISCOVER
+                </router-link>
+
+                <template v-if="isLoggedIn">
+                    <router-link
+                        to="/add-destination"
+                        class="header__link"
+                    >
+                        ADD DESTINATION
+                    </router-link>
+
+                    <router-link
+                        to="/profile"
+                        class="header__link"
+                    >
+                        PROFILE
+                    </router-link>
+                </template>
             </nav>
 
             <div class="header__right">
@@ -68,70 +95,117 @@ async function handleLogout() {
     </v-app>
 </template>
 
-<style scoped>
+<style>
 @import url('https://fonts.googleapis.com/css2?family=Italiana&family=Jost:wght@300;400&display=swap');
- 
+
+html,
+body,
+#app {
+    min-height: 100%;
+    margin: 0;
+}
+
+body {
+    font-family: 'Jost', system-ui, sans-serif;
+}
+
 .header {
+    position: relative;
+    z-index: 5;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.8rem 0.6rem;
+    gap: 1rem;
+    padding: 0.8rem 1.2rem;
+    background: #fff;
+    color: #000;
     font-family: 'Jost', system-ui, sans-serif;
     font-weight: 300;
     font-size: 0.75rem;
     letter-spacing: 0.04em;
-    background: #fff;
 }
- 
+
 .header__nav,
 .header__right {
     display: flex;
     align-items: center;
-    gap: 2rem;
+    flex-wrap: wrap;
+    gap: 1.5rem;
 }
- 
-.header a {
+
+.header__right {
+    gap: 0.75rem;
+}
+
+.header__link {
     color: #000;
     text-decoration: none;
+    transition: opacity 0.2s;
 }
- 
-.header__right {
-    gap: 1rem;
+
+.header__link:hover {
+    opacity: 0.6;
 }
- 
+
+.header__link.router-link-active {
+    text-decoration: underline;
+    text-underline-offset: 5px;
+}
+
+.header a:focus-visible,
+.header button:focus-visible {
+    outline: 2px solid #5aa9e6;
+    outline-offset: 3px;
+}
+
+.header__lang {
+    white-space: nowrap;
+}
+
 .pill {
-    padding: 0.35rem 1.4rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.45rem 1.2rem;
     border: 1px solid #222;
     border-radius: 999px;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
 }
- 
+
 .pill--dark {
     background: #222;
     color: #fff !important;
 }
- 
-.header a:focus-visible {
-    outline: 2px solid #5aa9e6;
-    outline-offset: 3px;
+
+.pill--light {
+    background: #fff;
+    color: #000 !important;
 }
-button.pill {
-    background: transparent;
-    color: #000;
-    font: inherit;
-    cursor: pointer;
+
+.pill:hover {
+    opacity: 0.75;
 }
- 
+
 @media (max-width: 760px) {
     .header {
         flex-direction: column;
-        gap: 0.8rem;
+        align-items: center;
+        padding: 1rem 0.75rem;
     }
- 
+
     .header__nav {
-        gap: 1rem;
-        flex-wrap: wrap;
         justify-content: center;
+        gap: 0.8rem 1.2rem;
+    }
+
+    .header__right {
+        justify-content: center;
+        flex-wrap: wrap;
     }
 }
 </style>
- 

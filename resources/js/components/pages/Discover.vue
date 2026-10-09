@@ -1,859 +1,313 @@
-
 <template>
-    <main class="profile">
-        <transition name="toast">
-            <div v-if="toast" class="toast" role="status">
-                {{ toast }}
-            </div>
-        </transition>
-
-        <header class="profile__hero">
-            <p>Your saved places, your visited ones, and everything about your account in one place.</p>
-            <h1>PROFILE</h1>
-        </header>
-
-        <section class="user">
-            <div class="user__info">
-                <div class="user__avatar" aria-hidden="true">
-                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round">
-                        <circle cx="12" cy="8" r="4" />
-                        <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" />
-                    </svg>
-                </div>
-
-                <div>
-                    <h2>{{ username || 'YOUR NAME' }}</h2>
-                    <p>{{ user?.email || 'you@example.com' }}</p>
-                    <p v-if="memberSince">MEMBER SINCE {{ memberSince }}</p>
-                </div>
-            </div>
+    <main class="discover">
+        <section class="discover__intro">
+            <h1>FIND YOUR<br>DESTINATION</h1>
+            <p>
+                MARK THE PLACES YOU'VE VISITED AND KEEP YOUR TRAVEL MEMORIES
+                ORGANIZED, ONE TRIP AT A TIME.
+            </p>
         </section>
 
-        <section class="mine">
-            <div class="mine__head">
-                <h2>MY TRIPS</h2>
+        <section class="discover__main">
+            <label class="search">
+                <svg
+                    width="30"
+                    height="30"
+                    viewBox="0 0 30 30"
+                    aria-hidden="true"
+                >
+                    <circle
+                        cx="13"
+                        cy="13"
+                        r="10"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1"
+                    />
+                    <path
+                        d="M20.5 20.5L28 28"
+                        stroke="currentColor"
+                        stroke-width="1"
+                    />
+                </svg>
 
-                <div class="mine__tools">
-                    <div class="tabs" role="tablist">
-                        <button
-                            v-for="tab in tabs"
-                            :key="tab.value"
-                            type="button"
-                            role="tab"
-                            class="tabs__item"
-                            :class="{ 'tabs__item--on': filter === tab.value }"
-                            :aria-selected="filter === tab.value"
-                            @click="filter = tab.value"
+                <input
+                    v-model="search"
+                    type="search"
+                    placeholder="SEARCH DESTINATIONS"
+                    aria-label="Search destinations"
+                >
+            </label>
+
+            <div class="filters">
+                <label class="filter">
+                    <select
+                        v-model="category"
+                        aria-label="Filter by category"
+                    >
+                        <option value="">ALL CATEGORIES</option>
+
+                        <option
+                            v-for="item in categories"
+                            :key="item.value"
+                            :value="item.value"
                         >
-                            {{ tab.label }}
-                        </button>
-                    </div>
+                            {{ item.label }}
+                        </option>
+                    </select>
 
-                    <button type="button" class="mine__add" @click="openModal">
-                        + ADD TRIP
-                    </button>
-                </div>
+                    <span class="filter__arrow" aria-hidden="true">V</span>
+                </label>
+
+                <label v-if="isLoggedIn" class="filter">
+                    <select
+                        v-model="status"
+                        aria-label="Filter by status"
+                    >
+                        <option value="">ALL STATUSES</option>
+                        <option value="visited">VISITED</option>
+                        <option value="unvisited">UNVISITED</option>
+                    </select>
+
+                    <span class="filter__arrow" aria-hidden="true">V</span>
+                </label>
+
+                <button
+                    v-if="search || category || status"
+                    type="button"
+                    class="filters__clear"
+                    @click="clearFilters"
+                >
+                    CLEAR
+                </button>
             </div>
 
-            <p v-if="loadingTrips" class="mine__empty">LOADING…</p>
-
-            <p v-else-if="!filteredTrips.length" class="mine__empty">
-                NO TRIPS FOUND. CLICK “ADD TRIP” TO CREATE YOUR FIRST ONE.
+            <p v-if="loading" class="empty">
+                LOADING DESTINATIONS...
             </p>
 
-            <ul v-else class="trip-grid">
-                <li v-for="trip in filteredTrips" :key="trip.id">
-                    <article class="card trip-card">
-                        <img
-                            class="trip-card__image"
-                            :src="getTripImageUrl(trip)"
-                            :alt="trip.title || trip.name || 'Trip image'"
-                            @error="onTripImageError($event, trip)"
-                        >
+            <p v-else-if="error" class="empty">
+                {{ error }}
+            </p>
 
-                        <span
-                            class="card__badge"
-                            :class="{ 'card__badge--dark': trip.status === 'visited' }"
-                        >
-                            {{ trip.status === 'visited' ? 'VISITED' : 'WANT TO VISIT' }}
-                        </span>
-
-                        <span class="card__name">
-                            {{ trip.title || trip.name || 'UNTITLED TRIP' }}
-                        </span>
-                    </article>
+            <ul v-else-if="filtered.length" class="grid">
+                <li
+                    v-for="place in filtered"
+                    :key="place.id"
+                >
+                    <router-link
+                        :to="`/destination/${place.id}`"
+                        class="card"
+                        :style="{
+                            backgroundImage: `url('${place.image}')`
+                        }"
+                    >
+                        <span>{{ place.name }}</span>
+                    </router-link>
                 </li>
             </ul>
+
+            <p v-else class="empty">
+                NO DESTINATIONS FOUND. TRY A DIFFERENT SEARCH.
+            </p>
         </section>
-
-        <section class="account">
-            <div class="account__intro">
-                <h2>ACCOUNT<br>DETAILS</h2>
-                <p>KEEP YOUR DETAILS UP TO DATE SO YOUR LIST IS ALWAYS YOURS.</p>
-            </div>
-
-            <form class="account__form" @submit.prevent="saveChanges">
-                <label class="field">
-                    <span>FULL NAME</span>
-                    <input :value="username" type="text" placeholder="YOUR NAME" readonly>
-                </label>
-
-                <label class="field">
-                    <span>EMAIL</span>
-                    <input
-                        v-model.trim="form.email"
-                        type="email"
-                        placeholder="YOU@EXAMPLE.COM"
-                        autocomplete="email"
-                        required
-                    >
-                    <small v-if="errors.email">{{ errors.email[0] }}</small>
-                </label>
-
-                <label class="field">
-                    <span>NEW PASSWORD</span>
-                    <input
-                        v-model="form.password"
-                        type="password"
-                        placeholder="Leave empty to keep current password"
-                        autocomplete="new-password"
-                    >
-                    <small v-if="errors.password">{{ errors.password[0] }}</small>
-                </label>
-
-                <label v-if="form.password" class="field">
-                    <span>CURRENT PASSWORD</span>
-                    <input
-                        v-model="form.current_password"
-                        type="password"
-                        placeholder="CURRENT PASSWORD"
-                        autocomplete="current-password"
-                    >
-                    <small v-if="errors.current_password">
-                        {{ errors.current_password[0] }}
-                    </small>
-                </label>
-
-                <div class="account__actions">
-                    <button type="submit" class="account__save" :disabled="saving">
-                        {{ saving ? 'SAVING...' : 'SAVE CHANGES' }}
-                    </button>
-
-                    <button
-                        type="button"
-                        class="account__delete"
-                        :disabled="saving"
-                        @click="deleteAccount"
-                    >
-                        DELETE ACCOUNT
-                    </button>
-                </div>
-            </form>
-        </section>
-
-        <transition name="fade">
-            <div
-                v-if="modal"
-                class="modal"
-                @click.self="closeModal"
-                @keydown.esc="closeModal"
-            >
-                <form
-                    class="modal__box"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="trip-title"
-                    @submit.prevent="createTrip"
-                >
-                    <div class="trip-stepper" aria-label="Trip creation progress">
-                        <span
-                            v-for="number in 3"
-                            :key="number"
-                            class="trip-stepper__item"
-                            :class="{
-                                'trip-stepper__item--active': step === number,
-                                'trip-stepper__item--done': step > number
-                            }"
-                        >
-                            0{{ number }}
-                        </span>
-                    </div>
-
-                    <p class="trip-form__eyebrow">STEP 0{{ step }} / 03</p>
-
-                    <h2 id="trip-title">
-                        {{ step === 1 ? 'TRIP DETAILS' : step === 2 ? 'DATES & CATEGORY' : 'REVIEW & CONFIRM' }}
-                    </h2>
-
-                    <div v-if="step === 1" class="form-step">
-                        <label class="field">
-                            <span>TRIP NAME *</span>
-                            <input
-                                ref="tripName"
-                                v-model.trim="tripForm.title"
-                                type="text"
-                                maxlength="255"
-                                placeholder="E.G. SUMMER IN NORWAY"
-                                required
-                            >
-                            <small v-if="tripErrors.title">{{ tripErrors.title[0] }}</small>
-                        </label>
-
-                        <label class="field">
-                            <span>DESCRIPTION</span>
-                            <textarea
-                                v-model.trim="tripForm.description"
-                                rows="4"
-                                placeholder="WHAT IS THIS TRIP ABOUT?"
-                            ></textarea>
-                            <small v-if="tripErrors.description">
-                                {{ tripErrors.description[0] }}
-                            </small>
-                        </label>
-                    </div>
-
-                    <div v-else-if="step === 2" class="form-step">
-                        <div class="trip-form__row">
-                            <label class="field">
-                                <span>DATE FROM *</span>
-                                <input v-model="tripForm.date_from" type="date" required>
-                                <small v-if="tripErrors.date_from">
-                                    {{ tripErrors.date_from[0] }}
-                                </small>
-                            </label>
-
-                            <label class="field">
-                                <span>DATE TILL *</span>
-                                <input
-                                    v-model="tripForm.date_till"
-                                    type="date"
-                                    :min="tripForm.date_from || undefined"
-                                    required
-                                >
-                                <small v-if="tripErrors.date_till">
-                                    {{ tripErrors.date_till[0] }}
-                                </small>
-                            </label>
-                        </div>
-
-                        <label class="field">
-                            <span>BUDGET (€)</span>
-                            <input
-                                v-model="tripForm.budget"
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                placeholder="E.G. 500"
-                            >
-                            <small v-if="tripErrors.budget">{{ tripErrors.budget[0] }}</small>
-                        </label>
-
-                        <label class="field">
-                            <span>STATUS *</span>
-                            <select v-model="tripForm.status" required>
-                                <option value="unvisited">WANT TO VISIT</option>
-                                <option value="visited">VISITED</option>
-                            </select>
-                            <small v-if="tripErrors.status">{{ tripErrors.status[0] }}</small>
-                        </label>
-
-                        <label class="field">
-                            <span>CATEGORY</span>
-                            <select v-model="tripForm.category">
-                                <option value="">CHOOSE CATEGORY</option>
-                                <option value="nature">NATURE</option>
-                                <option value="adventure">ADVENTURE</option>
-                                <option value="rest">REST</option>
-                            </select>
-                            <small v-if="tripErrors.category">
-                                {{ tripErrors.category[0] }}
-                            </small>
-                        </label>
-                    </div>
-
-                    <div v-else class="form-step">
-                        <label class="field">
-                            <span>TRIP PHOTO (JPG, PNG · MAX 2 MB)</span>
-                            <input
-                                type="file"
-                                accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-                                @change="onTripImageChange"
-                            >
-                            <small v-if="tripErrors.image">{{ tripErrors.image[0] }}</small>
-                        </label>
-
-                        <div class="trip-review">
-                            <p class="trip-review__label">TRIP NAME</p>
-                            <p class="trip-review__value">{{ tripForm.title || '—' }}</p>
-
-                            <p class="trip-review__label">DESCRIPTION</p>
-                            <p class="trip-review__value">
-                                {{ tripForm.description || 'Not specified' }}
-                            </p>
-
-                            <p class="trip-review__label">DATES</p>
-                            <p class="trip-review__value">
-                                {{ tripForm.date_from || '—' }} — {{ tripForm.date_till || '—' }}
-                            </p>
-
-                            <p class="trip-review__label">BUDGET</p>
-                            <p class="trip-review__value">
-                                {{ tripForm.budget !== '' ? `€${tripForm.budget}` : 'Not specified' }}
-                            </p>
-
-                            <p class="trip-review__label">STATUS</p>
-                            <p class="trip-review__value">
-                                {{ tripForm.status === 'visited' ? 'VISITED' : 'WANT TO VISIT' }}
-                            </p>
-
-                            <p class="trip-review__label">CATEGORY</p>
-                            <p class="trip-review__value">
-                                {{ tripForm.category ? tripForm.category.toUpperCase() : 'Not specified' }}
-                            </p>
-
-                            <p class="trip-review__label">PHOTO</p>
-                            <p class="trip-review__value">
-                                {{ tripImage ? tripImage.name : 'Default image will be used' }}
-                            </p>
-                        </div>
-
-                        <p v-if="tripErrors.user_id" class="field__error">
-                            {{ tripErrors.user_id[0] }}
-                        </p>
-
-                        <p v-if="tripErrors.general" class="field__error">
-                            {{ tripErrors.general[0] }}
-                        </p>
-                    </div>
-
-                    <div class="trip-form__navigation">
-                        <button
-                            v-if="step > 1"
-                            type="button"
-                            class="trip-form__back"
-                            @click="step--"
-                        >
-                            ← BACK
-                        </button>
-
-                        <button type="button" class="trip-form__cancel" @click="closeModal">
-                            CANCEL
-                        </button>
-
-                        <button
-                            v-if="step < 3"
-                            type="button"
-                            class="account__save"
-                            @click="nextTripStep"
-                        >
-                            CONTINUE →
-                        </button>
-
-                        <button
-                            v-else
-                            type="submit"
-                            class="account__save"
-                            :disabled="creating"
-                        >
-                            {{ creating ? 'SAVING...' : 'CONFIRM' }}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </transition>
     </main>
 </template>
 
 <script>
 import axios from 'axios'
-import { auth, fetchUser } from '../../auth.js'
+import { auth } from '../../auth.js'
 
 export default {
     data() {
         return {
-            user: auth.user,
-            filter: 'all',
+            search: '',
+            category: '',
+            status: '',
+            destinations: [],
+            loading: false,
+            error: '',
+            searchTimeout: null,
 
-            tabs: [
-                { value: 'all', label: 'ALL' },
-                { value: 'unvisited', label: 'WANT TO VISIT' },
-                { value: 'visited', label: 'VISITED' }
-            ],
-
-            trips: [],
-            loadingTrips: true,
-
-            modal: false,
-            creating: false,
-            step: 1,
-
-            tripForm: {
-                title: '',
-                description: '',
-                date_from: '',
-                date_till: '',
-                budget: '',
-                status: 'unvisited',
-                category: ''
-            },
-
-            tripImage: null,
-            tripErrors: {},
-
-            form: {
-                email: '',
-                password: '',
-                current_password: ''
-            },
-
-            errors: {},
-            saving: false,
-            toast: '',
-            toastTimer: null
+            categories: [
+                { value: 'rest', label: 'REST' },
+                { value: 'nature', label: 'NATURE' },
+                { value: 'adventure', label: 'ADVENTURE' }
+            ]
         }
     },
 
     computed: {
-        username() {
-            return (
-                this.user?.username ||
-                this.user?.Username ||
-                this.user?.name ||
-                ''
-            )
+        isLoggedIn() {
+            return !!auth.user
         },
 
-        memberSince() {
-            if (!this.user?.created_at) return ''
-
-            const date = new Date(this.user.created_at)
-
-            return Number.isNaN(date.getTime()) ? '' : date.getFullYear()
-        },
-
-        filteredTrips() {
-            return this.trips.filter(trip => {
-                if (this.filter === 'all') return true
-
-                return (
-                    trip.status === this.filter ||
-                    (this.filter === 'unvisited' && trip.status === 'not_visited')
-                )
+        filtered() {
+            return this.destinations.filter(place => {
+                return !this.category ||
+                    place.category === this.category
             })
         }
     },
 
-    async mounted() {
-        try {
-            await fetchUser()
-            this.user = auth.user
+    watch: {
+        search() {
+            clearTimeout(this.searchTimeout)
 
-            if (!this.user) {
-                await this.$router.push('/login')
-                return
+            this.searchTimeout = setTimeout(() => {
+                this.fetchDestinations()
+            }, 350)
+        },
+
+        category() {
+            this.fetchDestinations()
+        },
+
+        status() {
+            this.fetchDestinations()
+        },
+
+        isLoggedIn(loggedIn) {
+            if (!loggedIn) {
+                this.status = ''
+            } else {
+                this.fetchDestinations()
             }
-
-            this.form.email = this.user.email || ''
-            await this.loadTrips()
-        } catch (error) {
-            console.error('Failed to load profile:', error)
-            this.showToast('FAILED TO LOAD PROFILE')
         }
     },
 
-    methods: {
-        getAuthConfig() {
-            const token = localStorage.getItem('token')
-
-            if (!token) {
-                throw new Error('AUTH_REQUIRED')
-            }
-
-            return {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    Accept: 'application/json'
-                }
-            }
-        },
-
-        getTripImageUrl(trip) {
-            const image = trip.image
-            const id = trip.destination_id || trip.id || 'default'
-            const fallbackUrl = `https://picsum.photos/seed/destination-${id}/600/350`
-
-            if (!image || typeof image !== 'string' || !image.trim()) {
-                return fallbackUrl
-            }
-
-            const value = image.trim()
-
-            if (/^https?:\/\//i.test(value)) {
-                return value
-            }
-
-            if (value.startsWith('/')) {
-                return value
-            }
-
-            if (value.startsWith('storage/')) {
-                return `/${value}`
-            }
-
-            return `/storage/${value.replace(/^\/+/, '')}`
-        },
-
-        onTripImageError(event, trip) {
-            const id = trip.destination_id || trip.id || 'default'
-            const fallbackUrl = `https://picsum.photos/seed/destination-${id}/600/350`
-            const image = event.target
-
-            if (image.dataset.fallbackApplied === 'true') {
-                image.style.display = 'none'
-                return
-            }
-
-            image.dataset.fallbackApplied = 'true'
-            image.src = fallbackUrl
-        },
-
-        async loadTrips() {
-            this.loadingTrips = true
-
-            try {
-                const { data } = await axios.get(
-                    '/api/user/trips',
-                    this.getAuthConfig()
-                )
-
-                const list = Array.isArray(data)
-                    ? data
-                    : Array.isArray(data.data)
-                        ? data.data
-                        : Array.isArray(data.trips)
-                            ? data.trips
-                            : []
-
-                this.trips = list.map(trip => ({
-                    ...trip,
-                    date_from: trip.date_from || trip.date_form || '',
-                    title: trip.title || trip.name || '',
-                    destinations: trip.destinations || trip.trip_destinations || []
-                }))
-            } catch (error) {
-                console.error(
-                    'Failed to load trips:',
-                    error.response?.data || error.message
-                )
-
-                if (
-                    error.message === 'AUTH_REQUIRED' ||
-                    error.response?.status === 401
-                ) {
-                    this.showToast('PLEASE LOG IN AGAIN')
-                } else {
-                    this.showToast('FAILED TO LOAD TRIPS')
-                }
-            } finally {
-                this.loadingTrips = false
-            }
-        },
-
-        openModal() {
-            this.step = 1
-
-            this.tripForm = {
-                title: '',
-                description: '',
-                date_from: '',
-                date_till: '',
-                budget: '',
-                status: 'unvisited',
-                category: ''
-            }
-
-            this.tripImage = null
-            this.tripErrors = {}
-            this.modal = true
-
-            this.$nextTick(() => this.$refs.tripName?.focus())
-        },
-
-        closeModal() {
-            if (this.creating) return
-            this.modal = false
-        },
-
-        onTripImageChange(event) {
-            const file = event.target.files?.[0] || null
-
-            delete this.tripErrors.image
-            this.tripImage = null
-
-            if (!file) return
-
-            if (!['image/jpeg', 'image/png'].includes(file.type)) {
-                event.target.value = ''
-                this.tripErrors.image = ['Attēlam jābūt JPG vai PNG formātā.']
-                return
-            }
-
-            if (file.size > 2 * 1024 * 1024) {
-                event.target.value = ''
-                this.tripErrors.image = ['Attēla izmērs nedrīkst pārsniegt 2 MB.']
-                return
-            }
-
-            this.tripImage = file
-        },
-
-        nextTripStep() {
-            this.tripErrors = {}
-
-            if (this.step === 1) {
-                if (!this.tripForm.title.trim()) {
-                    this.tripErrors.title = ['Ceļojuma nosaukums ir obligāts.']
-                    return
-                }
-
-                this.step = 2
-                return
-            }
-
-            if (this.step === 2) {
-                if (!this.tripForm.date_from) {
-                    this.tripErrors.date_from = ['Norādi ceļojuma sākuma datumu.']
-                    return
-                }
-
-                if (!this.tripForm.date_till) {
-                    this.tripErrors.date_till = ['Norādi ceļojuma beigu datumu.']
-                    return
-                }
-
-                if (this.tripForm.date_till < this.tripForm.date_from) {
-                    this.tripErrors.date_till = [
-                        'Beigu datums nevar būt agrāks par sākuma datumu.'
-                    ]
-                    return
-                }
-
-                if (
-                    this.tripForm.budget !== '' &&
-                    (!Number.isFinite(Number(this.tripForm.budget)) ||
-                        Number(this.tripForm.budget) < 0)
-                ) {
-                    this.tripErrors.budget = ['Budžetam jābūt pozitīvam skaitlim.']
-                    return
-                }
-
-                this.step = 3
-            }
-        },
-
-        async createTrip() {
-            if (this.creating) return
-
-            this.creating = true
-            this.tripErrors = {}
-
-            try {
-                const formData = new FormData()
-
-                if (this.user?.id) {
-                    formData.append('user_id', String(this.user.id))
-                }
-
-                Object.entries(this.tripForm).forEach(([key, value]) => {
-                    if (value !== '' && value !== null && value !== undefined) {
-                        formData.append(key, String(value))
-                    }
-                })
-
-                if (this.tripImage) {
-                    formData.append('image', this.tripImage)
-                }
-
-                await axios.post('/api/trips', formData, this.getAuthConfig())
-
-                this.modal = false
-                this.step = 1
-
-                this.tripForm = {
-                    title: '',
-                    description: '',
-                    date_from: '',
-                    date_till: '',
-                    budget: '',
-                    status: 'unvisited',
-                    category: ''
-                }
-
-                this.tripImage = null
-
-                await this.loadTrips()
-                this.showToast('TRIP CREATED')
-            } catch (error) {
-                console.error(
-                    'Failed to create trip:',
-                    error.response?.data || error.message
-                )
-
-                if (
-                    error.message === 'AUTH_REQUIRED' ||
-                    error.response?.status === 401
-                ) {
-                    this.showToast('PLEASE LOG IN AGAIN')
-                    return
-                }
-
-                this.tripErrors = error.response?.data?.errors || {}
-                this.tripErrors.general = [
-                    error.response?.data?.message || 'Neizdevās izveidot ceļojumu.'
-                ]
-
-                this.step = 3
-            } finally {
-                this.creating = false
-            }
-        },
-
-        async saveChanges() {
-            if (this.saving) return
-
-            this.saving = true
-            this.errors = {}
-
-            try {
-                const config = this.getAuthConfig()
-                const emailChanged = this.form.email !== (this.user?.email || '')
-                const passwordChanged = Boolean(this.form.password)
-
-                if (!emailChanged && !passwordChanged) {
-                    this.showToast('NO CHANGES TO SAVE')
-                    return
-                }
-
-                if (emailChanged) {
-                    const { data } = await axios.put(
-                        '/api/profile/email',
-                        { email: this.form.email },
-                        config
-                    )
-
-                    if (data.user) {
-                        this.user = data.user
-                        auth.user = data.user
-                    } else if (this.user) {
-                        this.user.email = this.form.email
-                    }
-
-                    this.form.email = this.user?.email || this.form.email
-                }
-
-                if (passwordChanged) {
-                    await axios.put(
-                        '/api/profile/password',
-                        {
-                            current_password: this.form.current_password,
-                            password: this.form.password,
-                            password_confirmation: this.form.password
-                        },
-                        config
-                    )
-
-                    this.form.password = ''
-                    this.form.current_password = ''
-                }
-
-                this.showToast('CHANGES SAVED')
-            } catch (error) {
-                console.error(
-                    'Failed to save changes:',
-                    error.response?.data || error.message
-                )
-
-                if (
-                    error.message === 'AUTH_REQUIRED' ||
-                    error.response?.status === 401
-                ) {
-                    this.showToast('PLEASE LOG IN AGAIN')
-                    await this.$router.push('/login')
-                    return
-                }
-
-                this.errors = error.response?.data?.errors || {}
-
-                this.showToast(
-                    error.response?.status === 422
-                        ? 'PLEASE CHECK YOUR DETAILS'
-                        : 'FAILED TO SAVE CHANGES'
-                )
-            } finally {
-                this.saving = false
-            }
-        },
-
-        async deleteAccount() {
-            const confirmed = window.confirm(
-                'Vai tiešām vēlies dzēst savu kontu? Šo darbību nevar atsaukt.'
-            )
-
-            if (!confirmed) return
-
-            try {
-                await axios.delete('/api/profile', this.getAuthConfig())
-
-                localStorage.removeItem('token')
-                localStorage.removeItem('user')
-
-                auth.user = null
-                this.user = null
-
-                await this.$router.push('/')
-            } catch (error) {
-                console.error(
-                    'Failed to delete account:',
-                    error.response?.data || error.message
-                )
-
-                if (
-                    error.message === 'AUTH_REQUIRED' ||
-                    error.response?.status === 401
-                ) {
-                    this.showToast('PLEASE LOG IN AGAIN')
-                } else {
-                    this.showToast('FAILED TO DELETE ACCOUNT')
-                }
-            }
-        },
-
-        showToast(message) {
-            this.toast = message
-
-            if (this.toastTimer) clearTimeout(this.toastTimer)
-
-            this.toastTimer = setTimeout(() => {
-                this.toast = ''
-                this.toastTimer = null
-            }, 2500)
-        }
+    mounted() {
+        this.fetchDestinations()
     },
 
     beforeUnmount() {
-        if (this.toastTimer) clearTimeout(this.toastTimer)
+        clearTimeout(this.searchTimeout)
+    },
+
+    methods: {
+        async fetchDestinations() {
+            this.loading = true
+            this.error = ''
+
+            try {
+                const searchTerm = this.search.trim()
+                const token = localStorage.getItem('token')
+
+                let endpoint
+                let params = {}
+                let config = {}
+
+                if (this.isLoggedIn && this.status) {
+                    endpoint = '/api/recommendations/status'
+
+                    params = {
+                        status: this.status,
+                        search: searchTerm || undefined,
+                        category: this.category || undefined
+                    }
+
+                    if (token) {
+                        config.headers = {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                } else if (this.category && !searchTerm) {
+                    endpoint = '/api/recommendations/category'
+
+                    params = {
+                        category: this.category
+                    }
+                } else {
+                    endpoint = '/api/recommendations/search'
+
+                    params = {
+                        search: searchTerm || undefined
+                    }
+                }
+
+                const { data } = await axios.get(endpoint, {
+                    ...config,
+                    params
+                })
+
+                if (!Array.isArray(data)) {
+                    throw new Error('Invalid API response')
+                }
+
+                this.destinations = data.map(item => {
+                    const destination = item.destination || {}
+                    const place = destination.place || {}
+                    const country = place.country || {}
+                    const trip = item.trip || {}
+
+                    const title =
+                        destination.title ||
+                        place.name ||
+                        'Travel destination'
+
+                    return {
+                        id: destination.id ||
+                            item.destination_id ||
+                            item.id,
+
+                        name: [
+                            title,
+                            place.name !== title ? place.name : '',
+                            country.name || ''
+                        ].filter(Boolean).join(' | '),
+
+                        category: trip.category || '',
+                        status: trip.status || 'unvisited',
+
+                        image:
+                            destination.image ||
+                            place.image ||
+                            trip.image ||
+                            `https://picsum.photos/seed/destination-${destination.id || item.destination_id || item.id}/600/350`
+                    }
+                })
+            } catch (error) {
+                console.error(
+                    'Failed to load destinations:',
+                    error.response?.data || error.message
+                )
+
+                this.destinations = []
+
+                this.error = error.response?.status === 401
+                    ? 'PLEASE LOG IN TO FILTER BY STATUS.'
+                    : 'FAILED TO LOAD DESTINATIONS. PLEASE TRY AGAIN.'
+            } finally {
+                this.loading = false
+            }
+        },
+
+        clearFilters() {
+            clearTimeout(this.searchTimeout)
+
+            this.search = ''
+            this.category = ''
+            this.status = ''
+
+            this.fetchDestinations()
+        }
     }
 }
 </script>
-
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Italiana&family=Jost:wght@300;400&display=swap');
 
-.profile {
-    --muted: #555;
+.discover {
+    --muted: #777;
     --link: #5aa9e6;
     --serif: 'Italiana', serif;
-    padding: 0 0.6rem 6rem;
+
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr);
+    gap: 3rem;
+    align-items: center;
+    min-height: calc(100vh - 4.5rem);
+    padding: 2rem 2rem 4rem 1.5rem;
     background: #fff;
     color: #000;
     font-family: 'Jost', system-ui, sans-serif;
@@ -861,194 +315,131 @@ export default {
     letter-spacing: 0.02em;
 }
 
-.profile h1,
-.profile h2,
-.profile h3 {
-    margin: 0;
+
+.discover__intro h1 {
+    margin: 0 0 2rem;
     font-family: var(--serif);
     font-weight: 400;
+    font-size: clamp(2.6rem, 5.2vw, 4.5rem);
+    line-height: 1.1;
+    letter-spacing: 0.03em;
 }
 
-.profile a {
-    color: inherit;
-    text-decoration: none;
-}
-
-.profile a:focus-visible,
-.profile button:focus-visible,
-.profile input:focus-visible,
-.profile textarea:focus-visible,
-.profile select:focus-visible {
-    outline: 2px solid var(--link);
-    outline-offset: 3px;
-}
-
-/* Hero */
-.profile__hero {
-    position: relative;
-    height: 21rem;
-    border-radius: 1.2rem;
-    overflow: hidden;
-    color: #fff;
-    background:
-        linear-gradient(rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.28)),
-        #3b4a3a url('/image/profile-hero.jpg') center / cover no-repeat;
-}
-
-.profile__hero p {
-    position: absolute;
-    top: 1.8rem;
-    left: 1.5rem;
+.discover__intro p {
     margin: 0;
     max-width: 21rem;
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     line-height: 1.35;
-    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+    font-weight: 400;
 }
 
-.profile__hero h1 {
-    position: absolute;
-    left: 1.5rem;
-    bottom: -0.4rem;
-    font-size: clamp(3.5rem, 11vw, 9.5rem);
-    line-height: 1;
-    letter-spacing: 0.02em;
+
+.search {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid #555;
+    color: var(--muted);
 }
 
-/* User */
-.user {
+.search input {
+    flex: 1;
+    border: 0;
+    background: transparent;
+    font-family: var(--serif);
+    font-size: 1.15rem;
+    letter-spacing: 0.04em;
+    color: #000;
+    outline: none;
+}
+
+.search input::placeholder {
+    color: var(--muted);
+}
+
+.search:focus-within {
+    border-bottom-color: #000;
+    box-shadow: 0 1px 0 #000;
+}
+
+
+.filters {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 2rem 3rem;
-    padding: 3rem 1rem;
-    border-bottom: 1px solid #bdbdbd;
-}
-
-.user__info {
-    display: flex;
     align-items: center;
     gap: 1.5rem;
+    margin: 1.8rem 0 3.5rem;
 }
 
-.user__avatar {
-    display: flex;
+.filter {
+    position: relative;
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    flex: none;
-    width: 6.5rem;
-    height: 6.5rem;
-    border: 1px solid #000;
-    border-radius: 50%;
 }
 
-.user h2 {
-    margin-bottom: 0.4rem;
-    font-size: clamp(1.6rem, 3vw, 2.2rem);
-    line-height: 1.1;
-    text-transform: uppercase;
-}
-
-.user p {
-    margin: 0.3rem 0 0;
-    font-size: 0.8rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--muted);
-}
-
-/* Trips */
-.mine {
-    padding: 3.5rem 1rem 0;
-}
-
-.mine__head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 1rem 2rem;
-    margin-bottom: 1.8rem;
-}
-
-.mine__head h2 {
-    font-size: 1.65rem;
-}
-
-.mine__tools {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 1rem 2rem;
-}
-
-.mine__add {
-    padding: 0.8rem 1.8rem;
+.filter select {
+    padding-right: 1.8rem;
     border: 0;
-    border-radius: 999px;
-    background: #000;
-    color: #fff;
-    font: inherit;
-    font-size: 0.75rem;
-    font-weight: 400;
-    letter-spacing: 0.06em;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.mine__add:hover {
-    background: #222;
-}
-
-.mine__empty {
-    margin: 1.5rem 0;
-    font-size: 0.8rem;
-    color: var(--muted);
-}
-
-.tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem 1.75rem;
-}
-
-.tabs__item {
-    padding: 0.75rem 0;
-    border: 0;
-    border-bottom: 1px solid transparent;
-    background: none;
+    background: transparent;
     font-family: var(--serif);
-    font-size: 0.85rem;
+    font-size: 1.05rem;
     letter-spacing: 0.04em;
     color: var(--muted);
+    appearance: none;
+    cursor: pointer;
+    outline: none;
+}
+
+.filter select:focus-visible {
+    outline: 2px solid var(--link);
+    outline-offset: 4px;
+}
+
+.filter__arrow {
+    position: absolute;
+    right: 0;
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    color: var(--muted);
+    pointer-events: none;
+}
+
+.filters__clear {
+    border: 0;
+    background: none;
+    padding: 0;
+    font: inherit;
+    font-size: 0.7rem;
+    color: var(--link);
+    text-decoration: underline;
+    text-underline-offset: 3px;
     cursor: pointer;
 }
 
-.tabs__item--on {
-    border-bottom-color: #000;
-    color: #000;
-}
 
-.trip-grid {
+.grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1rem;
-    margin: 1.5rem 0 0;
+    gap: 1.2rem;
+    margin: 0;
     padding: 0;
     list-style: none;
 }
 
 .card {
-    position: relative;
     display: flex;
     align-items: flex-end;
-    height: 15rem;
-    padding: 0.75rem;
-    overflow: hidden;
+    aspect-ratio: 1.25 / 1;
+    padding: 0.7rem 0.8rem;
     border-radius: 1rem;
-    background: #75816c;
+    background: #6b7a63 center / cover no-repeat;
     color: #fff;
+    text-decoration: none;
+    font-family: var(--serif);
+    font-size: clamp(1rem, 1.5vw, 1.35rem);
+    letter-spacing: 0.03em;
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.5);
     transition: transform 0.25s;
 }
 
@@ -1056,458 +447,39 @@ export default {
     transform: translateY(-4px);
 }
 
-.trip-card__image {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
+.card:focus-visible {
+    outline: 2px solid var(--link);
+    outline-offset: 3px;
 }
 
-.trip-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    background: linear-gradient(
-        transparent 45%,
-        rgba(0, 0, 0, 0.55)
-    );
-    pointer-events: none;
-}
-
-.card__name {
-    position: relative;
-    z-index: 2;
-    color: #fff;
-    font-family: var(--serif);
-    font-size: 1.1rem;
-    letter-spacing: 0.03em;
-    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.5);
-    overflow-wrap: anywhere;
-}
-
-.card__badge {
-    position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    z-index: 3;
-    padding: 0.3rem 0.75rem;
-    border-radius: 999px;
-    background: #fff;
-    color: #000;
-    font-size: 0.7rem;
-    font-weight: 400;
-    letter-spacing: 0.06em;
-}
-
-.card__badge--dark {
-    background: #000;
-    color: #fff;
-}
-
-/* Account */
-.account {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2rem 5rem;
-    padding: 5rem 1rem 0;
-}
-
-.account__intro {
-    flex: 1 1 18rem;
-    max-width: 26rem;
-}
-
-.account__intro h2 {
-    margin-bottom: 0.9rem;
-    font-size: clamp(2.2rem, 4vw, 2.9rem);
-    line-height: 1.1;
-}
-
-.account__intro p {
+.empty {
     margin: 0;
-    max-width: 15rem;
-    font-size: 0.8rem;
-    line-height: 1.4;
-}
-
-.account__form {
-    flex: 1 1 22rem;
-    max-width: 39rem;
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-}
-
-.field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-}
-
-.field span {
-    font-size: 0.7rem;
-    letter-spacing: 0.06em;
+    font-size: 0.85rem;
     color: var(--muted);
 }
 
-.field input,
-.field textarea,
-.field select {
-    padding: 0.75rem 0;
-    border: 0;
-    border-bottom: 1px solid #767676;
-    border-radius: 0;
-    background: transparent;
-    font: inherit;
-    font-size: 0.9rem;
-    color: #000;
-    outline: none;
-}
-
-.field textarea {
-    resize: vertical;
-}
-
-.field input::placeholder,
-.field textarea::placeholder {
-    color: #767676;
-}
-
-.field input:focus,
-.field textarea:focus,
-.field select:focus {
-    border-bottom-color: #000;
-    box-shadow: 0 1px 0 #000;
-}
-
-.field input[readonly] {
-    color: var(--muted);
-}
-
-.field small,
-.field__error {
-    margin-top: 0.35rem;
-    color: #c0392b;
-    font-size: 0.72rem;
-}
-
-.account__actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 1rem 1.75rem;
-    margin-top: 0.5rem;
-}
-
-.account__save {
-    min-height: 3.25rem;
-    padding: 0 3.5rem;
-    border: 0;
-    border-radius: 999px;
-    background: #000;
-    color: #fff;
-    font: inherit;
-    font-size: 0.8rem;
-    font-weight: 400;
-    letter-spacing: 0.06em;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.account__save:hover {
-    background: #222;
-}
-
-.account__save:disabled,
-.account__delete:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
-.account__delete {
-    padding: 0.85rem 0;
-    border: 0;
-    border-bottom: 1px solid #000;
-    background: none;
-    font: inherit;
-    font-size: 0.75rem;
-    letter-spacing: 0.06em;
-    color: #000;
-    cursor: pointer;
-}
-
-/* Modal */
-.modal {
-    position: fixed;
-    inset: 0;
-    z-index: 20;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1.5rem;
-    overflow-y: auto;
-    background: rgba(0, 0, 0, 0.45);
-}
-
-.modal__box {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    width: 100%;
-    max-width: 30rem;
-    max-height: 90vh;
-    overflow-y: auto;
-    padding: 2.5rem 2.2rem;
-    border-radius: 1.2rem;
-    background: #fff;
-}
-
-.modal__box h2 {
-    font-size: 2rem;
-    letter-spacing: 0.04em;
-}
-
-.trip-stepper {
-    display: flex;
-    gap: 0.55rem;
-    margin-bottom: 0.25rem;
-}
-
-.trip-stepper__item {
-    display: grid;
-    place-items: center;
-    width: 2rem;
-    height: 2rem;
-    border: 1px solid #bdbdbd;
-    border-radius: 50%;
-    color: #777;
-    font-size: 0.7rem;
-    transition: background 0.2s, color 0.2s, border-color 0.2s;
-}
-
-.trip-stepper__item--active,
-.trip-stepper__item--done {
-    border-color: #000;
-    background: #000;
-    color: #fff;
-}
-
-.trip-form__eyebrow {
-    margin: 0;
-    color: var(--link);
-    font-size: 0.7rem;
-    letter-spacing: 0.12em;
-}
-
-.form-step {
-    min-height: 17rem;
-    animation: trip-step-in 0.25s ease;
-}
-
-.trip-form__row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-}
-
-.modal__box .field {
-    margin: 0 0 1.5rem;
-}
-
-.modal__box .field input,
-.modal__box .field textarea,
-.modal__box .field select {
-    width: 100%;
-    padding: 0.75rem 0;
-    border: 0;
-    border-bottom: 1px solid #767676;
-    border-radius: 0;
-    background: transparent;
-    color: #000;
-    font: inherit;
-    font-size: 0.9rem;
-}
-
-.trip-review {
-    padding: 1.25rem;
-    border: 1px solid #d4d4d4;
-    border-radius: 0.8rem;
-    background: #fafafa;
-}
-
-.trip-review__label {
-    margin: 0.8rem 0 0.2rem;
-    color: #666;
-    font-size: 0.65rem;
-    letter-spacing: 0.08em;
-}
-
-.trip-review__label:first-child {
-    margin-top: 0;
-}
-
-.trip-review__value {
-    margin: 0;
-    overflow-wrap: anywhere;
-    font-size: 0.9rem;
-}
-
-.trip-form__navigation {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 0.5rem;
-}
-
-.trip-form__back,
-.trip-form__cancel {
-    padding: 0.8rem 0;
-    border: 0;
-    border-bottom: 1px solid #000;
-    background: transparent;
-    color: #000;
-    font: inherit;
-    font-size: 0.72rem;
-    letter-spacing: 0.04em;
-    cursor: pointer;
-}
-
-.trip-form__back {
-    margin-right: auto;
-}
-
-.trip-form__navigation .account__save {
-    min-height: 3rem;
-    padding: 0 2rem;
-}
-
-@keyframes trip-step-in {
-    from {
-        opacity: 0;
-        transform: translateY(6px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Toast */
-.toast {
-    position: fixed;
-    top: 1.5rem;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 30;
-    max-width: calc(100vw - 2rem);
-    padding: 1rem 1.8rem;
-    border-radius: 999px;
-    background: #000;
-    color: #fff;
-    font-size: 0.8rem;
-    font-weight: 400;
-    text-align: center;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-}
-
-.toast-enter-active,
-.toast-leave-active {
-    transition: opacity 0.3s, transform 0.3s;
-}
-
-.toast-enter-from,
-.toast-leave-to {
-    opacity: 0;
-    transform: translate(-50%, -1rem);
-}
-
-.fade-enter-active,
-.fade-leave-active {
-    transition: opacity 0.25s;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-    opacity: 0;
-}
-
-/* Responsive */
-@media (max-width: 900px) {
-    .trip-grid {
+/* ---------- Mobile / tablet ---------- */
+@media (max-width: 1000px) {
+    .grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
-@media (max-width: 700px) {
-    .profile__hero {
-        height: 16rem;
+@media (max-width: 860px) {
+    .discover {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+        padding: 2rem 1.2rem 3rem;
     }
 
-    .user {
-        padding: 2rem 0.5rem;
-    }
-
-    .user__avatar {
-        width: 4.5rem;
-        height: 4.5rem;
-    }
-
-    .mine,
-    .account {
-        padding-left: 0.5rem;
-        padding-right: 0.5rem;
-    }
-
-    .account {
-        padding-top: 3.5rem;
+    .filters {
+        margin-bottom: 2rem;
     }
 }
 
-@media (max-width: 600px) {
-    .trip-grid {
+@media (max-width: 520px) {
+    .grid {
         grid-template-columns: 1fr;
-    }
-
-    .trip-form__row {
-        grid-template-columns: 1fr;
-        gap: 0;
-    }
-
-    .modal {
-        align-items: flex-start;
-        padding: 0.75rem;
-    }
-
-    .modal__box {
-        margin: auto 0;
-        padding: 1.75rem 1.25rem;
-    }
-
-    .form-step {
-        min-height: 0;
-    }
-
-    .trip-form__navigation .account__save {
-        padding: 0 1.25rem;
-    }
-
-    .account__save {
-        padding: 0 2rem;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .form-step,
-    .card {
-        animation: none;
-        transition: none;
     }
 }
 </style>

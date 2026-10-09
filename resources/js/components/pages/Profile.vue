@@ -56,10 +56,6 @@
                         <span class="card__badge" :class="{ 'card__badge--dark': trip.status === 'visited' }">{{ trip.status === 'visited' ? 'VISITED' : 'WANT TO VISIT' }}</span>
                         <span class="card__name">{{ trip.title || trip.name }}</span>
                     </article>
-<<<<<<< HEAD
-=======
-
->>>>>>> 2e54151cc940e3eeac3d5bb792fc8c44c472df49
                 </li>
             </ul>
         </section>
@@ -394,28 +390,6 @@ export default {
             return new Set(this.saved.map(place => place.country)).size
         }
     },
-<<<<<<< HEAD
-    async mounted() {
-        await fetchUser()
-        this.user = auth.user
-        if (!this.user) {
-            await this.$router.push('/login')
-            return
-        }
-        this.form.email = this.user.email || ''
-        await this.loadTrips()
-    },
-    methods: {
-       getAuthConfig() {
-        const token = localStorage.getItem('token')
-        if (!token) throw new Error('AUTH_REQUIRED')
-        return {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: 'application/json',
-            },
-        }
-=======
 
     async mounted() {
         try {
@@ -426,7 +400,6 @@ export default {
                 await this.$router.push('/login')
                 return
             }
->>>>>>> 2e54151cc940e3eeac3d5bb792fc8c44c472df49
 
             this.form.email = this.user.email || ''
             await this.loadTrips()
@@ -435,31 +408,6 @@ export default {
             this.showToast('FAILED TO LOAD PROFILE')
         }
     },
-<<<<<<< HEAD
-        onTripImageChange(event) {
-        this.tripImage = event.target.files[0] || null
-        delete this.tripErrors.image
-        if (this.tripImage && this.tripImage.size > 2 * 1024 * 1024) {
-        this.tripImage = null
-        event.target.value = ''
-        this.tripErrors = {
-            ...this.tripErrors,
-            image: ['The image must not exceed 2 MB.'],
-        }
-    }
-},
-        async loadTrips() {
-            this.loadingTrips = true
-            try {
-                const { data } = await axios.get('/api/user/trips', this.getAuthConfig())
-                const list = Array.isArray(data) ? data : (Array.isArray(data.data) ? data.data : (data.trips || []))
-                this.trips = list.map(trip => ({ ...trip, date_from: trip.date_from || trip.date_form || '', destinations: trip.destinations || trip.trip_destinations || [] }))
-            } catch (error) {
-                console.error('Failed to load trips:', error.response?.data || error.message)
-                this.showToast('FAILED TO LOAD TRIPS')
-            } finally {
-                this.loadingTrips = false
-=======
 
     methods: {
         getAuthConfig() {
@@ -474,7 +422,6 @@ export default {
                     Authorization: `Bearer ${token}`,
                     Accept: 'application/json'
                 }
->>>>>>> 2e54151cc940e3eeac3d5bb792fc8c44c472df49
             }
         },
 
@@ -569,53 +516,6 @@ export default {
                 ]
                 return
             }
-<<<<<<< HEAD
-        })
-        if (this.tripImage) {
-            data.append('image', this.tripImage)
-        }
-        const response = await axios.post('/api/trips', data, {
-            ...this.getAuthConfig(),
-        })
-        console.log('Trip created:', response.data)
-        this.closeModal()
-        this.step = 1
-        this.tripForm = {
-            title: '',
-            description: '',
-            date_from: '',
-            date_till: '',
-            budget: '',
-            status: 'unvisited',
-            category: '',
-        }
-        this.tripImage = null
-        await this.loadTrips()
-        this.showToast('TRIP CREATED')
-    } catch (error) {
-        console.error(
-            'Failed to create trip:',
-            error.response?.data || error.message
-        )
-        this.tripErrors = error.response?.data?.errors || {}
-        if (error.response?.status === 401) {
-            this.showToast('PLEASE LOG IN AGAIN')
-        } else {
-            this.tripErrors.general = [
-                error.response?.data?.message || 'Could not create trip.',
-            ]
-            this.step = 3
-        }
-    } finally {
-        this.creating = false
-    }
-},
-async saveChanges() {
-            if (this.saving) return
-            this.errors = {}
-            this.saving = true
-            try {
-=======
 
             if (file.size > 2 * 1024 * 1024) {
                 event.target.value = ''
@@ -665,7 +565,6 @@ async saveChanges() {
                     return
                 }
 
->>>>>>> 2e54151cc940e3eeac3d5bb792fc8c44c472df49
                 if (
                     this.tripForm.budget !== '' &&
                     Number(this.tripForm.budget) < 0
@@ -769,30 +668,11 @@ async saveChanges() {
                     this.form.email !== this.user?.email
                 ) {
                     const { data } = await axios.put(
-<<<<<<< HEAD
-                    '/api/profile/email',
-                    {
-                        email: this.form.email
-                    },
-                    {
-                        withCredentials: true
-                    }
-                )
-                return
-                }
-                    // E-pasta maiņas pieprasījums.
-                    await axios.put(
-                        '/api/profile/email',
-                        { email },
-                        config
-                    )
-=======
                         '/api/profile/email',
                         { email: this.form.email },
                         config
                     )
 
->>>>>>> 2e54151cc940e3eeac3d5bb792fc8c44c472df49
                     if (data.user) {
                         this.user = data.user
                         auth.user = data.user
@@ -802,10 +682,6 @@ async saveChanges() {
 
                     this.form.email = this.user?.email || ''
                 }
-<<<<<<< HEAD
-=======
-
->>>>>>> 2e54151cc940e3eeac3d5bb792fc8c44c472df49
                 if (this.form.password) {
                     await axios.put(
                         '/api/profile/password',
@@ -853,14 +729,6 @@ async saveChanges() {
             const confirmed = window.confirm(
                 'Vai tiešām vēlies dzēst savu kontu? Šo darbību nevar atsaukt.'
             )
-<<<<<<< HEAD
-            if (!confirmed) return
-            try {
-                await axios.delete('/api/profile', {
-                    withCredentials: true
-                })
-                auth.user = null
-=======
 
             if (!confirmed) return
 
@@ -876,16 +744,12 @@ async saveChanges() {
                 auth.user = null
                 this.user = null
 
->>>>>>> 2e54151cc940e3eeac3d5bb792fc8c44c472df49
                 await this.$router.push('/')
             } catch (error) {
                 console.error(
                     'Failed to delete account:',
                     error.response?.data || error.message
                 )
-<<<<<<< HEAD
-                this.showToast('FAILED TO DELETE ACCOUNT')
-=======
 
                 if (
                     error.message === 'AUTH_REQUIRED' ||
@@ -895,7 +759,6 @@ async saveChanges() {
                 } else {
                     this.showToast('FAILED TO DELETE ACCOUNT')
                 }
->>>>>>> 2e54151cc940e3eeac3d5bb792fc8c44c472df49
             }
         },
 

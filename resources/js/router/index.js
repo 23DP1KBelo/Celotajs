@@ -1,3 +1,4 @@
+
 import { createRouter, createWebHistory } from 'vue-router'
 
 import Home from '../components/pages/Home.vue'
@@ -9,19 +10,22 @@ import Register from '../components/pages/Register.vue'
 import Profile from '../components/pages/Profile.vue'
 
 const routes = [
-    // Publiski pieejamas lapas
+    // Publiskās lapas — pieejamas bez login
     {
         path: '/',
+        name: 'Home',
         component: Home,
         meta: { access: 'public' }
     },
     {
         path: '/discover',
+        name: 'Discover',
         component: Discover,
         meta: { access: 'public' }
     },
     {
         path: '/destination/:id',
+        name: 'Destination',
         component: Destination,
         meta: { access: 'public' }
     },
@@ -29,84 +33,74 @@ const routes = [
     // Tikai ielogotiem lietotājiem
     {
         path: '/add-destination',
+        name: 'AddDestination',
         component: AddDestination,
         meta: { access: 'auth' }
     },
     {
         path: '/profile',
+        name: 'Profile',
         component: Profile,
         meta: { access: 'auth' }
     },
 
-    // Admin lapas (ja nepieciešams)
-    // {
-    //     path: '/admin',
-    //     redirect: '/admin/destinations'
-    // },
-    // {
-    //     path: '/admin/destinations',
-    //     component: () => import('../components/pages/AdminDestinations.vue'),
-    //     meta: { access: 'admin' }
-    // },
-
-    // Guest lapas — pieejamas VISIEM
+    // Login un Register
     {
         path: '/login',
+        name: 'Login',
         component: Login,
         meta: { access: 'guest', hideHeader: true }
     },
     {
         path: '/register',
+        name: 'Register',
         component: Register,
         meta: { access: 'guest', hideHeader: true }
     },
+
+    // Neeksistējošs maršruts
+    {
+        path: '/:pathMatch(.*)*',
+        redirect: '/'
+    }
 ]
 
 const router = createRouter({
     history: createWebHistory(),
-    routes
+    routes,
+    scrollBehavior() {
+        return { top: 0 }
+    }
 })
 
 router.beforeEach((to) => {
     const token = localStorage.getItem('token')
-    const rawUser = localStorage.getItem('user')
 
     let user = null
 
     try {
+        const rawUser = localStorage.getItem('user')
         user = rawUser ? JSON.parse(rawUser) : null
     } catch {
-        user = null
+        localStorage.removeItem('user')
     }
 
     const isLoggedIn = Boolean(token && user)
-    const role = user?.role
 
-    // Tikai ielogotiem lietotājiem
+    // Publiskajām lapām nav nepieciešama autentifikācija.
+    if (to.meta.access === 'public') {
+        return true
+    }
+
+    // Pārējām aizsargātajām lapām nepieciešama ielogošanās.
     if (to.meta.access === 'auth' && !isLoggedIn) {
         return {
-            path: '/login',
+            name: 'Login',
             query: { redirect: to.fullPath }
         }
     }
 
-    // Tikai administratoriem
-    if (to.meta.access === 'admin') {
-        if (!isLoggedIn) {
-            return {
-                path: '/login',
-                query: { redirect: to.fullPath }
-            }
-        }
-
-        if (role !== 'admin') {
-            return { path: '/' }
-        }
-    }
-
-    // Login un Register ir pieejamas visiem,
-    // tāpēc guest pārbaude šeit nav nepieciešama.
-
+    // Ja lietotājs jau ir ielogojies, viņš var atvērt arī login/register.
     return true
 })
 

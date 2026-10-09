@@ -46,6 +46,7 @@ export async function fetchUser() {
 }
 
 // Ielogošanās
+
 export async function login(Username, password) {
     const { data } = await axios.post('/api/login', {
         Username,
@@ -53,11 +54,17 @@ export async function login(Username, password) {
     })
 
     localStorage.setItem('token', data.token)
-    auth.user = data.user
+
+    if (data.user) {
+        localStorage.setItem('user', JSON.stringify(data.user))
+    }
+
+    auth.user = data.user ?? null
     auth.loaded = true
 
     return data
 }
+
 
 // Izlogošanās
 export async function logout() {
