@@ -1,4 +1,3 @@
-
 import { reactive } from 'vue'
 import axios from 'axios'
 
@@ -9,25 +8,38 @@ export const auth = reactive({
 
 // Iegūst pašreizējo lietotāju
 export async function fetchUser() {
+    const token = localStorage.getItem('token')
+
+    if (!token) {
+        auth.user = null
+        auth.loaded = true
+        return null
+    }
+
     try {
-        const token = localStorage.getItem('token')
-
-        if (!token) {
-            auth.user = null
-            return
-        }
-
         const { data } = await axios.get('/api/me', {
             headers: {
-                Authorization: `Bearer ${token}`
+                Authorization: `Bearer ${token}`,
+                Accept: 'application/json'
             }
         })
 
-        // Laravel me() atgriež { user: UserResource }
         auth.user = data.user
+        return auth.user
     } catch (error) {
-        auth.user = null
-        localStorage.removeItem('token')
+        console.error(
+            'fetchUser failed:',
+            error.response?.status,
+            error.response?.data || error.message
+        )
+
+        // Dzēš tokenu tikai tad, ja tas vairs nav derīgs
+        if (error.response?.status === 401) {
+            auth.user = null
+            localStorage.removeItem('token')
+        }
+
+        return null
     } finally {
         auth.loaded = true
     }
@@ -53,11 +65,16 @@ export async function logout() {
 
     try {
         if (token) {
-            await axios.post('/api/logout', {}, {
-                headers: {
-                    Authorization: `Bearer ${token}`
+            await axios.post(
+                '/api/logout',
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json'
+                    }
                 }
-            })
+            )
         }
     } catch (error) {
         console.error(
@@ -70,4 +87,3 @@ export async function logout() {
         auth.loaded = true
     }
 }
-
