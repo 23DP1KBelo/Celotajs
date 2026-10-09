@@ -158,9 +158,13 @@ class TripDestinationController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(TripDestinations $request, string $id)
     {
-        //
+        $tripDestination = TripDestination::findOrFail($id);
+
+        $tripDestination->update($request->validated());
+
+        return new TripDestinationResource($tripDestination);
     }
 
     /**
