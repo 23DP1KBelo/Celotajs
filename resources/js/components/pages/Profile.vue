@@ -41,50 +41,6 @@
         <section class="mine">
             <div class="mine__head">
                 <h2>MY TRIPS</h2>
-<<<<<<< HEAD
-
-                <div class="tabs" role="tablist">
-                    <button
-                        v-for="tab in tabs"
-                        :key="tab.value"
-                        type="button"
-                        role="tab"
-                        class="tabs__item"
-                        :class="{ 'tabs__item--on': filter === tab.value }"
-                        :aria-selected="filter === tab.value"
-                        @click="filter = tab.value"
-                    >
-                        {{ tab.label }}
-                    </button>
-                </div>
-            </div>
-
-            <ul class="grid">
-                <li v-for="place in filtered" :key="place.id">
-                    <router-link
-                        :to="`/destination/${place.id}`"
-                        class="card"
-                        :style="{ backgroundImage: `url('${place.image}')` }"
-                    >
-                        <span
-                            class="card__badge"
-                            :class="{ 'card__badge--dark': place.status === 'visited' }"
-                        >
-                            {{ place.status === 'visited' ? 'VISITED' : 'WANT TO VISIT' }}
-                        </span>
-
-                        <span class="card__name">{{ place.name }}</span>
-                    </router-link>
-                </li>
-
-                <li>
-                    <router-link to="/discover" class="card card--add">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" aria-hidden="true">
-                            <path d="M12 4v16M4 12h16" />
-                        </svg>
-                        ADD TRIPS
-                    </router-link>
-=======
                 <div class="mine__tools">
                     <div class="tabs" role="tablist">
                         <button v-for="tab in tabs" :key="tab.value" type="button" role="tab" class="tabs__item" :class="{ 'tabs__item--on': filter === tab.value }" :aria-selected="filter === tab.value" @click="filter = tab.value">{{ tab.label }}</button>
@@ -100,7 +56,6 @@
                         <span class="card__badge" :class="{ 'card__badge--dark': trip.status === 'visited' }">{{ trip.status === 'visited' ? 'VISITED' : 'WANT TO VISIT' }}</span>
                         <span class="card__name">{{ trip.title || trip.name }}</span>
                     </article>
->>>>>>> polina
                 </li>
             </ul>
         </section>
@@ -352,16 +307,6 @@ export default {
                 { value: 'unvisited', label: 'WANT TO VISIT' },
                 { value: 'visited', label: 'VISITED' }
             ],
-<<<<<<< HEAD
-
-            destinations,
-
-            // Pagaidām statiski galamērķi.
-            saved: destinations.filter(place =>
-                [1, 2, 3].includes(place.id)
-            ),
-
-=======
             trips: [],
             loadingTrips: true,
             modal: false,
@@ -378,7 +323,6 @@ export default {
             },
             tripImage: null,
             tripErrors: {},
->>>>>>> polina
             form: {
                 email: '',
                 password: '',
@@ -423,16 +367,6 @@ export default {
             return new Set(this.saved.map(place => place.country)).size
         }
     },
-<<<<<<< HEAD
-
-    async mounted() {
-        await fetchUser()
-        this.user = auth.user
-
-        if (!this.user) {
-            await this.$router.push('/login')
-            return
-=======
     async mounted() {
         await fetchUser()
         this.user = auth.user
@@ -452,28 +386,10 @@ export default {
                 Authorization: `Bearer ${token}`,
                 Accept: 'application/json',
             },
->>>>>>> polina
         }
 
         this.form.email = this.user.email || ''
     },
-<<<<<<< HEAD
-
-    methods: {
-        getAuthConfig() {
-            const token = localStorage.getItem('token')
-
-            if (!token) {
-                throw new Error('AUTH_REQUIRED')
-            }
-
-            return {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json'
-                }
-=======
         onTripImageChange(event) {
         this.tripImage = event.target.files[0] || null
         delete this.tripErrors.image
@@ -497,7 +413,6 @@ export default {
                 this.showToast('FAILED TO LOAD TRIPS')
             } finally {
                 this.loadingTrips = false
->>>>>>> polina
             }
         },
         visibleDestinations(trip) {
@@ -608,83 +523,36 @@ async saveChanges() {
             this.errors = {}
             this.saving = true
             try {
-<<<<<<< HEAD
-                const config = this.getAuthConfig()
-
-                const email = this.form.email.trim()
-                const originalEmail = this.user?.email || ''
-
-                const emailChanged = email !== originalEmail
-                const passwordChanged = this.form.password.length > 0
-
-                // Ja nekas nav mainīts, nesūtām pieprasījumu.
-                if (!emailChanged && !passwordChanged) {
-                    this.showToast('NO CHANGES TO SAVE')
-                    return
-                }
-
-                // Pārbaudām e-pastu tikai tad, ja tas tiek mainīts.
-                if (emailChanged) {
-                    if (!email) {
-                        this.errors = {
-                            email: ['Email is required.']
-=======
                 if (
                     this.form.email !== this.user?.email
                     && this.form.email
                 ) {
                     const { data } = await axios.put(
-                        '/api/profile/email',
-                        {
-                            email: this.form.email
-                        },
-                        {
-                            withCredentials: true
->>>>>>> polina
-                        }
-                        return
+                    '/api/profile/email',
+                    {
+                        email: this.form.email
+                    },
+                    {
+                        withCredentials: true
                     }
-
+                )
+                return
+                }
                     // E-pasta maiņas pieprasījums.
                     await axios.put(
                         '/api/profile/email',
                         { email },
                         config
                     )
-<<<<<<< HEAD
-
-                    // Atjaunojam lietotāja datus.
-                    await fetchUser()
-                    this.user = auth.user
-
-                    if (!this.user) {
-                        throw new Error('USER_REFRESH_FAILED')
-=======
                     if (data.user) {
                         this.user = data.user
                     } else if (this.user) {
                         this.user.email = this.form.email
->>>>>>> polina
                     }
 
                     this.form.email = this.user.email || ''
                 }
-<<<<<<< HEAD
-
-                // Paroli mainām tikai tad, ja ievadīta jauna parole.
-                if (passwordChanged) {
-                    if (!this.form.current_password) {
-                        this.errors = {
-                            current_password: [
-                                'Please enter your current password.'
-                            ]
-                        }
-                        return
-                    }
-
-=======
                 if (this.form.password) {
->>>>>>> polina
                     await axios.put(
                         '/api/profile/password',
                         {
@@ -734,37 +602,17 @@ async saveChanges() {
             )
             if (!confirmed) return
             try {
-<<<<<<< HEAD
-                const config = this.getAuthConfig()
-
-                await axios.delete('/api/profile', config)
-
-                localStorage.removeItem('token')
-                auth.user = null
-                auth.loaded = true
-
-=======
                 await axios.delete('/api/profile', {
                     withCredentials: true
                 })
                 auth.user = null
->>>>>>> polina
                 await this.$router.push('/')
             } catch (error) {
                 console.error(
                     'Neizdevās dzēst kontu:',
                     error.response?.data || error.message
                 )
-<<<<<<< HEAD
-
-                if (error.response?.status === 401) {
-                    this.showToast('PLEASE LOG IN AGAIN')
-                } else {
-                    this.showToast('FAILED TO DELETE ACCOUNT')
-                }
-=======
                 this.showToast('FAILED TO DELETE ACCOUNT')
->>>>>>> polina
             }
         },
         showToast(message) {
@@ -816,12 +664,7 @@ async saveChanges() {
     outline: 2px solid var(--link);
     outline-offset: 3px;
 }
-<<<<<<< HEAD
-
-/* Hero */
-=======
 /* ---------- Hero ---------- */
->>>>>>> polina
 .profile__hero {
     position: relative;
     height: 21rem;
@@ -850,12 +693,7 @@ async saveChanges() {
     line-height: 1;
     letter-spacing: 0.02em;
 }
-<<<<<<< HEAD
-
-/* User */
-=======
 /* ---------- User ---------- */
->>>>>>> polina
 .user {
     display: flex;
     flex-wrap: wrap;
@@ -914,12 +752,7 @@ async saveChanges() {
     letter-spacing: 0.06em;
     color: var(--muted);
 }
-<<<<<<< HEAD
-
-/* Destinations */
-=======
 /* ---------- My trips ---------- */
->>>>>>> polina
 .mine {
     padding: 3.5rem 1rem 0;
 }
@@ -1200,13 +1033,7 @@ async saveChanges() {
 .account__save:hover {
     background: #222;
 }
-<<<<<<< HEAD
-
-.account__save:disabled,
-.account__delete:disabled {
-=======
 .account__save:disabled {
->>>>>>> polina
     cursor: default;
     opacity: 0.6;
 }
@@ -1221,10 +1048,6 @@ async saveChanges() {
     color: #000;
     cursor: pointer;
 }
-<<<<<<< HEAD
-
-/* Toast */
-=======
 /* ---------- Modal ---------- */
 .modal {
     position: fixed;
@@ -1403,7 +1226,6 @@ async saveChanges() {
     opacity: 0;
 }
 /* ---------- Toast ---------- */
->>>>>>> polina
 .toast {
     position: fixed;
     top: 1.5rem;
@@ -1491,9 +1313,6 @@ async saveChanges() {
         padding: 2rem 1.5rem;
     }
 }
-<<<<<<< HEAD
-</style>
-=======
 
 .card--add {
     align-items: center;
@@ -1523,4 +1342,3 @@ async saveChanges() {
 }
 
 </style>
->>>>>>> polina
