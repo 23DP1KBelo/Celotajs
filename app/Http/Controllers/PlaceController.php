@@ -25,4 +25,23 @@ class PlaceController extends Controller
 
         return PlaceResource::collection($places);
     }
+
+    // all Places
+    public function index()
+    {
+        $places = Place::orderBy('name')->get();
+        return PlaceResource::collection($places);
+    }
+
+    // place by country
+    public function getPlacesByCountry($countryId)
+    {
+        $places = Place::where('country_id', $countryId)
+            ->orderBy('name')
+            ->get();
+
+        return PlaceResource::collection($places);
+    }
+
+
 }

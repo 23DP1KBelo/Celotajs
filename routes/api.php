@@ -53,4 +53,23 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // create trip
     Route::post('/trips', [TripController::class, 'store']);
+
+    // show trip
+    Route::get('/trips/{id}', [TripController::class, 'show']);
+
+    // update trip
+    Route::put('/trips/{id}', [TripController::class, 'update']);
+
+    // delete trip
+    Route::delete('/trips/{id}', [TripController::class, 'destroy']);
+
+    // Get all trips for the authenticated user with their destinations
+    Route::get('/user/trips', [TripController::class, 'getUserTripsWithDestinations']);
+
+    // all places
+    Route::get('/places', [PlaceController::class, 'index']);
+
+    // places by country
+    Route::get('/countries/{countryId}/places', [PlaceController::class, 'getPlacesByCountry']);
+
 });

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\TripRequest;
 use App\Models\Trip;
 use App\Models\TripDestination;
+use App\Http\Resources\TripResource;
 
 class TripController extends Controller
 {
@@ -71,6 +72,19 @@ class TripController extends Controller
         return response()->json($query->get());
     }
 
+    // Get all trips for the authenticated user with their destinations
+    public function getUserTripsWithDestinations(Request $request)
+    {
+        $trips = Trip::with([
+            'tripDestinations.destination.place.country',
+        ])
+            ->where('user_id', $request->user()->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return TripResource::collection($trips);
+    }
+
     /**
      * Store a newly created resource in storage.
      */
@@ -87,15 +101,21 @@ class TripController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $trip = Trip::findOrFail($id);
+
+        return new TripResource($trip);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(TripRequest $request, string $id)
     {
-        //
+        $trip = Trip::findOrFail($id);
+
+        $trip->update($request->validated());
+
+        return new TripResource($trip);
     }
 
     /**
@@ -103,6 +123,14 @@ class TripController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $trip = Trip::findOrFail($id);
+
+        TripDestination::where('trip_id', $trip->id)->delete();
+
+        $trip->delete();
+
+        return response()->json([
+            'message' => 'Trip and related destinations deleted successfully.'
+        ], 200);
     }
 }
