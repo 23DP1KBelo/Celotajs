@@ -6,11 +6,16 @@
                 Save the places you've always dreamed of visiting. Organize them,
                 prioritize them, and watch your list turn into real adventures.
             </p>
-            <router-link to="/register" class="hero__cta">START YOUR JOURNEY →</router-link>
+
+            <router-link to="/register" class="hero__cta">
+                START YOUR JOURNEY →
+            </router-link>
+
             <p class="hero__text hero__text--right">
                 Keep all the places you want to see, things you want to experience,
                 and adventures you want to have in one place.
             </p>
+
             <h1 class="hero__brand">WANDERLIST</h1>
         </section>
 
@@ -18,18 +23,59 @@
         <section class="recommended">
             <div class="recommended__head">
                 <h2>RECOMMENDED DESTINATIONS</h2>
+
                 <div class="recommended__arrows">
-                    <button type="button" aria-label="Previous" @click="scrollCards(-1)">&lt;</button>
-                    <button type="button" aria-label="Next" @click="scrollCards(1)">&gt;</button>
+                    <button
+                        type="button"
+                        aria-label="Previous destinations"
+                        @click="scrollCards(-1)"
+                    >
+                        &lt;
+                    </button>
+
+                    <button
+                        type="button"
+                        aria-label="Next destinations"
+                        @click="scrollCards(1)"
+                    >
+                        &gt;
+                    </button>
                 </div>
             </div>
 
-            <ul ref="track" class="cards">
-                <li v-for="place in destinations" :key="place.name" class="card">
-                    <div class="card__img" :style="{ backgroundImage: `url(${place.image})` }">
-                        <span>{{ place.name }}</span>
+            <p v-if="loading" class="recommended__message">
+                Loading destinations...
+            </p>
+
+            <p v-else-if="error" class="recommended__message">
+                {{ error }}
+            </p>
+
+            <p
+                v-else-if="destinations.length === 0"
+                class="recommended__message"
+            >
+                No recommended destinations available.
+            </p>
+
+            <ul v-else ref="track" class="cards">
+                <li
+                    v-for="item in destinations"
+                    :key="item.id"
+                    class="card"
+                >
+                    <div
+                        class="card__img"
+                        :style="{
+                            backgroundImage: `url('${item.image}')`
+                        }"
+                    >
+                        <span>{{ item.name }}</span>
                     </div>
-                    <router-link to="/discover" class="card__link">EXPLORE →</router-link>
+
+                    <router-link to="/discover" class="card__link">
+                        EXPLORE →
+                    </router-link>
                 </li>
             </ul>
         </section>
@@ -37,13 +83,23 @@
         <!-- How it works -->
         <section class="how">
             <p class="how__label">HOW IT WORKS</p>
+
             <div class="how__head">
                 <h2>PLAN SAVE <em>REMEMBER</em></h2>
-                <p>YOUR PLACES, YOUR PLANS, YOUR ADVENTURES<br>— ALL IN ONE PLACE.</p>
+
+                <p>
+                    YOUR PLACES, YOUR PLANS, YOUR ADVENTURES
+                    <br>
+                    — ALL IN ONE PLACE.
+                </p>
             </div>
 
             <ol class="steps">
-                <li v-for="step in steps" :key="step.number" class="step">
+                <li
+                    v-for="step in steps"
+                    :key="step.number"
+                    class="step"
+                >
                     <span class="step__num">{{ step.number }}</span>
                     <h3>{{ step.title }}</h3>
                     <p>{{ step.text }}</p>
@@ -53,56 +109,120 @@
 
         <!-- Why it matters -->
         <section class="why">
-            <div class="why__img" />
+            <div class="why__img"></div>
+
             <div class="why__body">
                 <p class="why__label">WHY IT MATTERS</p>
+
                 <h2>PLACES WORTH REMEMBERING</h2>
+
                 <p class="why__text">
                     FROM HIDDEN MOUNTAIN LAKES TO CITIES YOU'VE ALWAYS WANTED TO SEE —
                     KEEP EVERY DESTINATION THAT INSPIRES YOU IN ONE PLACE.
                 </p>
-                <router-link to="/discover" class="why__link">EXPLORE DESTINATIONS →</router-link>
+
+                <router-link to="/discover" class="why__link">
+                    EXPLORE DESTINATIONS →
+                </router-link>
             </div>
         </section>
     </div>
 </template>
 
 <script>
+import axios from 'axios'
+
 export default {
     data() {
         return {
-            
-            destinations: [
-                { name: 'SELLA PASS | ITALY', image: '/images/dest-italy.jpg' },
-                { name: 'ISLANDS | NORWAY', image: '/images/dest-norway.jpg' },
-                { name: 'FJORDS | ICELAND', image: '/images/dest-iceland.jpg' },
-                { name: 'ISLAND | PORTUGAL', image: '/images/dest-portugal.jpg' }
-            ],
+            destinations: [],
+            loading: false,
+            error: '',
 
             steps: [
                 {
                     number: '01',
                     title: 'PLAN',
-                    text: 'CREATE YOUR PERSONAL LIST OF DREAM DESTINATIONS, FROM FAMOUS FJORDS TO THE TRAIL NOBODY\'S HEARD OF YET.'
+                    text: "CREATE YOUR PERSONAL LIST OF DREAM DESTINATIONS, FROM FAMOUS FJORDS TO THE TRAIL NOBODY'S HEARD OF YET."
                 },
                 {
                     number: '02',
                     title: 'SAVE',
-                    text: 'SET A BUDGET AND PRIORITY FOR EVERY PLACE, SO YOU ALWAYS KNOW WHAT YOU\'RE SAVING FOR NEXT.'
+                    text: 'SET A BUDGET AND PRIORITY FOR EVERY PLACE, SO YOU ALWAYS KNOW WHAT YOU ARE SAVING FOR NEXT.'
                 },
                 {
                     number: '03',
                     title: 'REMEMBER',
-                    text: 'MARK THE PLACES YOU\'VE VISITED AND KEEP YOUR TRAVEL MEMORIES ORGANIZED, ONE TRIP AT A TIME.'
+                    text: "MARK THE PLACES YOU'VE VISITED AND KEEP YOUR TRAVEL MEMORIES ORGANIZED, ONE TRIP AT A TIME."
                 }
             ]
         }
     },
 
+    mounted() {
+        this.fetchDestinations()
+    },
+
     methods: {
+       async fetchDestinations() {
+            this.loading = true
+            this.error = ''
+
+            try {
+                const { data } = await axios.get(
+                    '/api/trip-destinations/recommendations'
+                )
+
+                if (!Array.isArray(data)) {
+                    throw new Error('Invalid API response')
+                }
+
+                this.destinations = data.map((item, index) => {
+                    const destination = item.destination || {}
+                    const place = destination.place || {}
+                    const country = place.country || {}
+
+                    const title =
+                        destination.title ||
+                        place.name ||
+                        'Travel destination'
+
+                    const countryName = country.name || ''
+
+                    // Picsum attēls katrai kartei
+                    const imageId = Math.floor(Math.random() * 100) + 1
+
+                    return {
+                        id: item.id,
+                        name: [title, countryName].filter(Boolean).join(' | '),
+                        image:
+                            destination.image ||
+                            place.image ||
+                            `https://picsum.photos/id/${imageId}/600/350`
+                    }
+                })
+            } catch (error) {
+                console.error(
+                    'Failed to load recommendations:',
+                    error.response?.data || error.message
+                )
+
+                this.error = 'Failed to load recommended destinations.'
+                this.destinations = []
+            } finally {
+                this.loading = false
+            }
+        },
+
         scrollCards(direction) {
             const track = this.$refs.track
-            track.scrollBy({ left: direction * track.clientWidth * 0.8, behavior: 'smooth' })
+
+            if (!track) return
+
+            track.scrollBy({
+                left: direction * track.clientWidth * 0.8,
+                behavior: 'smooth'
+            })
         }
     }
 }

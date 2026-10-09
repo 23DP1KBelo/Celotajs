@@ -26,32 +26,105 @@ class TripDestinationController extends Controller
     {
         //
     }
-
     public function searchRecommendations(Request $request)
     {
-        $search = $request->input('search');
+        $request->validate([
+            'search' => 'nullable|string|max:255',
+        ]);
 
-        $recommendations = TripDestination::with([
-            'destination.place.country'
-        ])
-        ->where('recommendations', true)
-        ->whereHas('destination', function ($query) use ($search) {
+        $search = trim($request->input('search', ''));
 
-            $query->where('title', 'LIKE', '%' . $search . '%')
+        $query = TripDestination::where('recommendations', true)
+            ->with([
+                'trip',
+                'destination.place.country',
+            ]);
 
-                ->orWhereHas('place', function ($query) use ($search) {
+        if ($search !== '') {
+            $query->whereHas('destination', function ($destinationQuery) use ($search) {
+                $destinationQuery
+                    ->where('title', 'LIKE', "%{$search}%")
+                    ->orWhereHas('place', function ($placeQuery) use ($search) {
+                        $placeQuery
+                            ->where('name', 'LIKE', "%{$search}%")
+                            ->orWhereHas('country', function ($countryQuery) use ($search) {
+                                $countryQuery->where('name', 'LIKE', "%{$search}%");
+                            });
+                    });
+            });
+        }
 
-                    $query->where('name', 'LIKE', '%' . $search . '%')
-
-                        ->orWhereHas('country', function ($query) use ($search) {
-                            $query->where('name', 'LIKE', '%' . $search . '%');
-                        });
-                });
-        })
-        ->get();
-
-        return TripDestinations::collection($recommendations);
+        return response()->json($query->get());
     }
+
+    // 2. Filtrēšana pēc kategorijas
+    public function filterByCategory(Request $request)
+    {
+        $request->validate([
+            'category' => 'required|in:rest,nature,adventure',
+        ]);
+
+        $category = $request->input('category');
+
+        $recommendations = TripDestination::where('recommendations', true)
+            ->whereHas('trip', function ($tripQuery) use ($category) {
+                $tripQuery->where('category', $category);
+            })
+            ->with([
+                'trip',
+                'destination.place.country',
+            ])
+            ->get();
+
+        return response()->json($recommendations);
+    }
+
+    // 3. Filtrēšana pēc statusa — tikai autorizētiem lietotājiem
+    public function filterByStatus(Request $request)
+    {
+        $request->validate([
+            'status' => 'required|in:visited,unvisited',
+            'search' => 'nullable|string|max:255',
+            'category' => 'nullable|in:rest,nature,adventure',
+        ]);
+
+        $userId = $request->user()->id;
+        $status = $request->input('status');
+        $search = trim($request->input('search', ''));
+        $category = $request->input('category');
+
+        $query = TripDestination::where('recommendations', true)
+            ->whereHas('trip', function ($tripQuery) use ($userId, $status, $category) {
+                $tripQuery
+                    ->where('user_id', $userId)
+                    ->where('status', $status);
+
+                if ($category !== null) {
+                    $tripQuery->where('category', $category);
+                }
+            })
+            ->with([
+                'trip',
+                'destination.place.country',
+            ]);
+
+        if ($search !== '') {
+            $query->whereHas('destination', function ($destinationQuery) use ($search) {
+                $destinationQuery
+                    ->where('title', 'LIKE', "%{$search}%")
+                    ->orWhereHas('place', function ($placeQuery) use ($search) {
+                        $placeQuery
+                            ->where('name', 'LIKE', "%{$search}%")
+                            ->orWhereHas('country', function ($countryQuery) use ($search) {
+                                $countryQuery->where('name', 'LIKE', "%{$search}%");
+                            });
+                    });
+            });
+        }
+
+        return response()->json($query->get());
+    }
+
     /**
      * Store a newly created resource in storage.
      */

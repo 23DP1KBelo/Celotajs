@@ -18,6 +18,59 @@ class TripController extends Controller
         return response()->json($trips);
     }
 
+    public function filterRecommendations(Request $request)
+    {
+        $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'category' => ['nullable', 'in:rest,nature,adventure'],
+            'status' => ['nullable', 'in:visited,unvisited'],
+        ]);
+
+        $user = $request->user();
+
+        $query = TripDestination::query()
+            ->where('recommendations', true)
+            ->with(['destination.place.country', 'trip']);
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+
+            $query->whereHas('destination', function ($destinationQuery) use ($search) {
+                $destinationQuery
+                    ->where('title', 'LIKE', "%{$search}%")
+                    ->orWhereHas('place', function ($placeQuery) use ($search) {
+                        $placeQuery
+                            ->where('name', 'LIKE', "%{$search}%")
+                            ->orWhereHas('country', function ($countryQuery) use ($search) {
+                                $countryQuery->where('name', 'LIKE', "%{$search}%");
+                            });
+                    });
+            });
+        }
+
+        if ($request->filled('category')) {
+            $category = $request->input('category');
+
+            $query->whereHas('trip', function ($tripQuery) use ($category, $user) {
+                $tripQuery
+                    ->where('user_id', $user->id)
+                    ->where('category', $category);
+            });
+        }
+
+        if ($request->filled('status')) {
+            $status = $request->input('status');
+
+            $query->whereHas('trip', function ($tripQuery) use ($status, $user) {
+                $tripQuery
+                    ->where('user_id', $user->id)
+                    ->where('status', $status);
+            });
+        }
+
+        return response()->json($query->get());
+    }
+
     /**
      * Store a newly created resource in storage.
      */

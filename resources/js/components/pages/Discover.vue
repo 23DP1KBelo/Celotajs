@@ -2,41 +2,73 @@
     <main class="discover">
         <section class="discover__intro">
             <h1>FIND YOUR<br>DESTINATION</h1>
-            <p>MARK THE PLACES YOU'VE VISITED AND KEEP YOUR TRAVEL MEMORIES ORGANIZED, ONE TRIP AT A TIME.</p>
+            <p>
+                MARK THE PLACES YOU'VE VISITED AND KEEP YOUR TRAVEL MEMORIES
+                ORGANIZED, ONE TRIP AT A TIME.
+            </p>
         </section>
 
         <section class="discover__main">
             <label class="search">
-                <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
-                    <circle cx="13" cy="13" r="10" fill="none" stroke="currentColor" stroke-width="1" />
-                    <path d="M20.5 20.5L28 28" stroke="currentColor" stroke-width="1" />
+                <svg
+                    width="30"
+                    height="30"
+                    viewBox="0 0 30 30"
+                    aria-hidden="true"
+                >
+                    <circle
+                        cx="13"
+                        cy="13"
+                        r="10"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1"
+                    />
+                    <path
+                        d="M20.5 20.5L28 28"
+                        stroke="currentColor"
+                        stroke-width="1"
+                    />
                 </svg>
+
                 <input
-                    v-model.trim="search"
+                    v-model="search"
                     type="search"
-                    placeholder="TYPE IN YOUR SEARCH"
+                    placeholder="SEARCH DESTINATIONS"
                     aria-label="Search destinations"
                 >
             </label>
 
             <div class="filters">
                 <label class="filter">
-                    <select v-model="category" aria-label="Filter by category">
-                        <option value="">FILTER BY CATEGORY</option>
-                        <option v-for="item in categories" :key="item" :value="item">
-                            {{ item.toUpperCase() }}
-                        </option>
-                    </select>
-                    <span class="filter__arrow" aria-hidden="true">V</span>
-                </label>
+                    <select
+                        v-model="category"
+                        aria-label="Filter by category"
+                    >
+                        <option value="">ALL CATEGORIES</option>
 
-                <label class="filter">
-                    <select v-model="status" aria-label="Filter by status">
-                        <option value="">FILTER BY STATUS</option>
-                        <option v-for="item in statuses" :key="item.value" :value="item.value">
+                        <option
+                            v-for="item in categories"
+                            :key="item.value"
+                            :value="item.value"
+                        >
                             {{ item.label }}
                         </option>
                     </select>
+
+                    <span class="filter__arrow" aria-hidden="true">V</span>
+                </label>
+
+                <label v-if="isLoggedIn" class="filter">
+                    <select
+                        v-model="status"
+                        aria-label="Filter by status"
+                    >
+                        <option value="">ALL STATUSES</option>
+                        <option value="visited">VISITED</option>
+                        <option value="unvisited">UNVISITED</option>
+                    </select>
+
                     <span class="filter__arrow" aria-hidden="true">V</span>
                 </label>
 
@@ -50,66 +82,218 @@
                 </button>
             </div>
 
-            <ul v-if="filtered.length" class="grid">
-                <li v-for="place in filtered" :key="place.id">
+            <p v-if="loading" class="empty">
+                LOADING DESTINATIONS...
+            </p>
+
+            <p v-else-if="error" class="empty">
+                {{ error }}
+            </p>
+
+            <ul v-else-if="filtered.length" class="grid">
+                <li
+                    v-for="place in filtered"
+                    :key="place.id"
+                >
                     <router-link
                         :to="`/destination/${place.id}`"
                         class="card"
-                        :style="{ backgroundImage: `url('${place.image}')` }"
+                        :style="{
+                            backgroundImage: `url('${place.image}')`
+                        }"
                     >
                         <span>{{ place.name }}</span>
                     </router-link>
                 </li>
             </ul>
 
-            <p v-else class="empty">NO DESTINATIONS FOUND. TRY A DIFFERENT SEARCH.</p>
+            <p v-else class="empty">
+                NO DESTINATIONS FOUND. TRY A DIFFERENT SEARCH.
+            </p>
         </section>
     </main>
 </template>
 
 <script>
+import axios from 'axios'
+import { auth } from '../../auth.js'
 
-import { destinations } from '../../data/destinations.js'
 export default {
     data() {
         return {
             search: '',
             category: '',
             status: '',
+            destinations: [],
+            loading: false,
+            error: '',
+            searchTimeout: null,
 
-            categories: ['Daba', 'Atpūta', 'Izklaide'],
-            statuses: [
-                { value: 'visited', label: 'APMEKLĒTS' },
-                { value: 'not_visited', label: 'NEAPMEKLĒTS' }
-            ],
-             destinations 
+            categories: [
+                { value: 'rest', label: 'REST' },
+                { value: 'nature', label: 'NATURE' },
+                { value: 'adventure', label: 'ADVENTURE' }
+            ]
         }
     },
 
     computed: {
+        isLoggedIn() {
+            return !!auth.user
+        },
+
         filtered() {
-            const query = this.search.toLowerCase()
-
-            return this.destinations.filter((place) => {
-                const matchesSearch = !query || place.name.toLowerCase().includes(query)
-                const matchesCategory = !this.category || place.category === this.category
-                const matchesStatus = !this.status || place.status === this.status
-
-                return matchesSearch && matchesCategory && matchesStatus
+            return this.destinations.filter(place => {
+                return !this.category ||
+                    place.category === this.category
             })
         }
     },
 
+    watch: {
+        search() {
+            clearTimeout(this.searchTimeout)
+
+            this.searchTimeout = setTimeout(() => {
+                this.fetchDestinations()
+            }, 350)
+        },
+
+        category() {
+            this.fetchDestinations()
+        },
+
+        status() {
+            this.fetchDestinations()
+        },
+
+        isLoggedIn(loggedIn) {
+            if (!loggedIn) {
+                this.status = ''
+            } else {
+                this.fetchDestinations()
+            }
+        }
+    },
+
+    mounted() {
+        this.fetchDestinations()
+    },
+
+    beforeUnmount() {
+        clearTimeout(this.searchTimeout)
+    },
+
     methods: {
+        async fetchDestinations() {
+            this.loading = true
+            this.error = ''
+
+            try {
+                const searchTerm = this.search.trim()
+                const token = localStorage.getItem('token')
+
+                let endpoint
+                let params = {}
+                let config = {}
+
+                if (this.isLoggedIn && this.status) {
+                    endpoint = '/api/recommendations/status'
+
+                    params = {
+                        status: this.status,
+                        search: searchTerm || undefined,
+                        category: this.category || undefined
+                    }
+
+                    if (token) {
+                        config.headers = {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                } else if (this.category && !searchTerm) {
+                    endpoint = '/api/recommendations/category'
+
+                    params = {
+                        category: this.category
+                    }
+                } else {
+                    endpoint = '/api/recommendations/search'
+
+                    params = {
+                        search: searchTerm || undefined
+                    }
+                }
+
+                const { data } = await axios.get(endpoint, {
+                    ...config,
+                    params
+                })
+
+                if (!Array.isArray(data)) {
+                    throw new Error('Invalid API response')
+                }
+
+                this.destinations = data.map(item => {
+                    const destination = item.destination || {}
+                    const place = destination.place || {}
+                    const country = place.country || {}
+                    const trip = item.trip || {}
+
+                    const title =
+                        destination.title ||
+                        place.name ||
+                        'Travel destination'
+
+                    return {
+                        id: destination.id ||
+                            item.destination_id ||
+                            item.id,
+
+                        name: [
+                            title,
+                            place.name !== title ? place.name : '',
+                            country.name || ''
+                        ].filter(Boolean).join(' | '),
+
+                        category: trip.category || '',
+                        status: trip.status || 'unvisited',
+
+                        image:
+                            destination.image ||
+                            place.image ||
+                            trip.image ||
+                            `https://picsum.photos/seed/destination-${destination.id || item.destination_id || item.id}/600/350`
+                    }
+                })
+            } catch (error) {
+                console.error(
+                    'Failed to load destinations:',
+                    error.response?.data || error.message
+                )
+
+                this.destinations = []
+
+                this.error = error.response?.status === 401
+                    ? 'PLEASE LOG IN TO FILTER BY STATUS.'
+                    : 'FAILED TO LOAD DESTINATIONS. PLEASE TRY AGAIN.'
+            } finally {
+                this.loading = false
+            }
+        },
+
         clearFilters() {
+            clearTimeout(this.searchTimeout)
+
             this.search = ''
             this.category = ''
             this.status = ''
+
+            this.fetchDestinations()
         }
     }
 }
 </script>
-
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Italiana&family=Jost:wght@300;400&display=swap');
 

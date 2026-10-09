@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TripDestination extends Model
 {
@@ -12,11 +13,13 @@ class TripDestination extends Model
         'destination_id',
     ];
 
-    public function Trip() {
-        return $this->belongsTo(Trip::class, 'trip_id', 'id');
+    public function trip(): BelongsTo
+    {
+        return $this->belongsTo(Trip::class, 'trip_id');
     }
 
-    public function destination() {
-        return $this->belongsTo(Destination::class, 'destination_id', 'id');
+    public function destination(): BelongsTo
+    {
+        return $this->belongsTo(Destination::class, 'destination_id');
     }
 }

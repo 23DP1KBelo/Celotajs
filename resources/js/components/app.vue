@@ -1,3 +1,4 @@
+
 <script setup>
 import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -16,34 +17,53 @@ async function handleLogout() {
     router.push('/')
 }
 </script>
+
 <template>
     <v-app>
         <header v-if="showHeader" class="header">
-        <nav class="header__nav" aria-label="Main">
-            <router-link to="/discover">DISCOVER</router-link>
-            <router-link to="/add-destination">ADD DESTINATION</router-link>
-            <router-link to="/profile">PROFILE</router-link>
-            <router-link to="/statistics">STATISTICS</router-link>
-        </nav>
- 
-        <div class="header__right">
-            <span class="header__lang">EN | LV</span>
+            <nav class="header__nav" aria-label="Main">
+                <router-link to="/discover">DISCOVER</router-link>
+                <router-link to="/add-destination">
+                    ADD DESTINATION
+                </router-link>
+                <router-link to="/profile">PROFILE</router-link>
+                <router-link to="/statistics">STATISTICS</router-link>
+            </nav>
 
-            <template v-if="auth.loaded">
-                <template v-if="!isLoggedIn">
-                    <router-link to="/login" class="pill pill--dark">LOG IN</router-link>
-                    <router-link to="/register" class="pill pill--light">SIGN UP</router-link>
+            <div class="header__right">
+                <span class="header__lang">EN | LV</span>
+
+                <template v-if="auth.loaded">
+                    <template v-if="!isLoggedIn">
+                        <router-link
+                            to="/login"
+                            class="pill pill--dark"
+                        >
+                            LOG IN
+                        </router-link>
+
+                        <router-link
+                            to="/register"
+                            class="pill pill--light"
+                        >
+                            SIGN UP
+                        </router-link>
+                    </template>
+
+                    <button
+                        v-else
+                        type="button"
+                        class="pill pill--light"
+                        @click="handleLogout"
+                    >
+                        LOG OUT
+                    </button>
                 </template>
-
-                <button v-else type="button" class="pill pill--light" @click="handleLogout">
-                    LOG OUT
-                </button>
-            </template>
-        </div>
-    </header>
+            </div>
+        </header>
 
         <v-main>
-        <RouterView />
+            <RouterView />
         </v-main>
     </v-app>
 </template>
