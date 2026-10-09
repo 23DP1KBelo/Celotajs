@@ -7,25 +7,14 @@
         </transition>
 
         <header class="profile__hero">
-            <p>
-                Your saved places, your visited ones, and everything
-                about your account in one place.
-            </p>
+            <p>Your saved places, your visited ones, and everything about your account in one place.</p>
             <h1>PROFILE</h1>
         </header>
 
         <section class="user">
             <div class="user__info">
-                <div class="user__avatar">
-                    <svg
-                        width="44"
-                        height="44"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1"
-                        stroke-linecap="round"
-                    >
+                <div class="user__avatar" aria-hidden="true">
+                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round">
                         <circle cx="12" cy="8" r="4" />
                         <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" />
                     </svg>
@@ -34,9 +23,7 @@
                 <div>
                     <h2>{{ username || 'YOUR NAME' }}</h2>
                     <p>{{ user?.email || 'you@example.com' }}</p>
-                    <p v-if="memberSince">
-                        MEMBER SINCE {{ memberSince }}
-                    </p>
+                    <p v-if="memberSince">MEMBER SINCE {{ memberSince }}</p>
                 </div>
             </div>
 
@@ -45,12 +32,10 @@
                     <strong>{{ saved.length }}</strong>
                     <span>SAVED PLACES</span>
                 </div>
-
                 <div>
                     <strong>{{ visitedCount }}</strong>
                     <span>VISITED</span>
                 </div>
-
                 <div>
                     <strong>{{ countriesCount }}</strong>
                     <span>COUNTRIES</span>
@@ -68,11 +53,9 @@
                         :key="tab.value"
                         type="button"
                         role="tab"
-                        :aria-selected="filter === tab.value"
                         class="tabs__item"
-                        :class="{
-                            'tabs__item--on': filter === tab.value
-                        }"
+                        :class="{ 'tabs__item--on': filter === tab.value }"
+                        :aria-selected="filter === tab.value"
                         @click="filter = tab.value"
                     >
                         {{ tab.label }}
@@ -81,43 +64,27 @@
             </div>
 
             <ul class="grid">
-                <li
-                    v-for="place in filtered"
-                    :key="place.id"
-                >
+                <li v-for="place in filtered" :key="place.id">
                     <router-link
                         :to="`/destination/${place.id}`"
                         class="card"
-                        :style="{
-                            backgroundImage: `url('${place.image}')`
-                        }"
+                        :style="{ backgroundImage: `url('${place.image}')` }"
                     >
                         <span
                             class="card__badge"
-                            :class="{
-                                'card__badge--dark':
-                                    place.status === 'visited'
-                            }"
+                            :class="{ 'card__badge--dark': place.status === 'visited' }"
                         >
-                            {{
-                                place.status === 'visited'
-                                    ? 'VISITED'
-                                    : 'WANT TO VISIT'
-                            }}
+                            {{ place.status === 'visited' ? 'VISITED' : 'WANT TO VISIT' }}
                         </span>
-
-                        <span class="card__name">
-                            {{ place.name }}
-                        </span>
+                        <span class="card__name">{{ place.name }}</span>
                     </router-link>
                 </li>
 
                 <li>
-                    <router-link
-                        to="/discover"
-                        class="card card--add"
-                    >
-                        <span>+</span>
+                    <router-link to="/discover" class="card card--add">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" aria-hidden="true">
+                            <path d="M12 4v16M4 12h16" />
+                        </svg>
                         ADD DESTINATION
                     </router-link>
                 </li>
@@ -127,24 +94,13 @@
         <section class="account">
             <div class="account__intro">
                 <h2>ACCOUNT<br>DETAILS</h2>
-                <p>
-                    KEEP YOUR DETAILS UP TO DATE SO YOUR LIST
-                    IS ALWAYS YOURS.
-                </p>
+                <p>KEEP YOUR DETAILS UP TO DATE SO YOUR LIST IS ALWAYS YOURS.</p>
             </div>
 
-            <form
-                class="account__form"
-                @submit.prevent="saveChanges"
-            >
+            <form class="account__form" @submit.prevent="saveChanges">
                 <label class="field">
                     <span>FULL NAME</span>
-                    <input
-                        :value="username"
-                        type="text"
-                        placeholder="YOUR NAME"
-                        readonly
-                    >
+                    <input :value="username" type="text" placeholder="YOUR NAME" readonly>
                 </label>
 
                 <label class="field">
@@ -156,10 +112,7 @@
                         autocomplete="email"
                         required
                     >
-
-                    <small v-if="errors.email">
-                        {{ errors.email[0] }}
-                    </small>
+                    <small v-if="errors.email">{{ errors.email[0] }}</small>
                 </label>
 
                 <label class="field">
@@ -170,16 +123,10 @@
                         placeholder="**********"
                         autocomplete="new-password"
                     >
-
-                    <small v-if="errors.password">
-                        {{ errors.password[0] }}
-                    </small>
+                    <small v-if="errors.password">{{ errors.password[0] }}</small>
                 </label>
 
-                <label
-                    v-if="form.password"
-                    class="field"
-                >
+                <label v-if="form.password" class="field">
                     <span>CURRENT PASSWORD</span>
                     <input
                         v-model="form.current_password"
@@ -187,28 +134,16 @@
                         autocomplete="current-password"
                         required
                     >
-
-                    <small v-if="errors.current_password">
-                        {{ errors.current_password[0] }}
-                    </small>
+                    <small v-if="errors.current_password">{{ errors.current_password[0] }}</small>
                 </label>
 
                 <div class="account__actions">
-                    <button
-                        type="submit"
-                        class="account__save"
-                        :disabled="saving"
-                    >
+                    <button type="submit" class="account__save" :disabled="saving">
                         {{ saving ? 'SAVING...' : 'SAVE CHANGES' }}
                     </button>
 
-                    <button
-                        type="button"
-                        class="account__delete"
-                        :disabled="saving || deleting"
-                        @click="deleteAccount"
-                    >
-                        {{ deleting ? 'DELETING...' : 'DELETE ACCOUNT' }}
+                    <button type="button" class="account__delete" :disabled="saving" @click="deleteAccount">
+                        DELETE ACCOUNT
                     </button>
                 </div>
             </form>
@@ -261,15 +196,16 @@ export default {
         ]
 
         return {
-            user: null,
+            user: auth.user,
             filter: 'all',
-            destinations,
 
             tabs: [
                 { value: 'all', label: 'ALL' },
                 { value: 'not_visited', label: 'WANT TO VISIT' },
                 { value: 'visited', label: 'VISITED' }
             ],
+
+            destinations,
 
             saved: destinations.filter(place =>
                 [1, 2, 3].includes(place.id)
@@ -283,7 +219,6 @@ export default {
 
             errors: {},
             saving: false,
-            deleting: false,
             toast: '',
             toastTimer: null
         }
@@ -291,36 +226,23 @@ export default {
 
     computed: {
         username() {
-            return (
-                this.user?.username ||
-                this.user?.name ||
-                this.user?.Username ||
-                ''
-            )
+            return this.user?.username || this.user?.Username || ''
         },
 
         memberSince() {
-            if (!this.user?.created_at) {
-                return ''
-            }
+            if (!this.user?.created_at) return ''
 
             const date = new Date(this.user.created_at)
 
-            return Number.isNaN(date.getTime())
-                ? ''
-                : date.getFullYear()
+            return Number.isNaN(date.getTime()) ? '' : date.getFullYear()
         },
 
         visitedCount() {
-            return this.saved.filter(
-                place => place.status === 'visited'
-            ).length
+            return this.saved.filter(place => place.status === 'visited').length
         },
 
         countriesCount() {
-            return new Set(
-                this.saved.map(place => place.country)
-            ).size
+            return new Set(this.saved.map(place => place.country)).size
         },
 
         filtered() {
@@ -328,48 +250,37 @@ export default {
                 return this.saved
             }
 
-            return this.saved.filter(
-                place => place.status === this.filter
-            )
+            return this.saved.filter(place => place.status === this.filter)
         }
     },
 
     async mounted() {
-        await this.loadProfile()
-    },
+        await fetchUser()
+        this.user = auth.user
 
-    beforeUnmount() {
-        if (this.toastTimer) {
-            clearTimeout(this.toastTimer)
+        if (!this.user) {
+            await this.$router.push('/login')
+            return
         }
+
+        this.form.email = this.user.email || ''
     },
 
     methods: {
-        authConfig() {
+        getAuthConfig() {
             const token = localStorage.getItem('token')
 
             if (!token) {
-                throw new Error('Authentication token is missing.')
+                throw new Error('AUTH_REQUIRED')
             }
 
             return {
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    Accept: 'application/json'
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json'
                 }
             }
-        },
-
-        async loadProfile() {
-            await fetchUser()
-
-            if (!auth.user) {
-                this.$router.push('/login')
-                return
-            }
-
-            this.user = auth.user
-            this.form.email = this.user.email || ''
         },
 
         async saveChanges() {
@@ -379,46 +290,53 @@ export default {
             this.saving = true
 
             try {
-                const emailChanged =
-                    this.form.email !== this.user?.email
+                const config = this.getAuthConfig()
+                const email = this.form.email.trim()
+                const emailChanged = email !== (this.user?.email || '')
+                const passwordChanged = Boolean(this.form.password)
 
-                const passwordChanged =
-                    this.form.password.length > 0
-
-                if (!emailChanged && !passwordChanged) {
-                    this.showToast('NO CHANGES TO SAVE')
+                if (!email && !passwordChanged) {
+                    this.errors = {
+                        email: ['Email is required.']
+                    }
                     return
                 }
 
                 if (emailChanged) {
-                    const { data } = await axios.put(
+                    await axios.put(
                         '/api/profile/email',
-                        {
-                            email: this.form.email
-                        },
-                        this.authConfig()
+                        { email },
+                        config
                     )
 
-                    this.user = data.user || {
-                        ...this.user,
-                        email: this.form.email
+                    await fetchUser()
+                    this.user = auth.user
+
+                    if (!this.user) {
+                        throw new Error('USER_REFRESH_FAILED')
                     }
 
-                    auth.user = this.user
-                    this.form.email = this.user.email
+                    this.form.email = this.user.email || ''
                 }
 
                 if (passwordChanged) {
+                    if (!this.form.current_password) {
+                        this.errors = {
+                            current_password: [
+                                'Please enter your current password.'
+                            ]
+                        }
+                        return
+                    }
+
                     await axios.put(
                         '/api/profile/password',
                         {
-                            current_password:
-                                this.form.current_password,
+                            current_password: this.form.current_password,
                             password: this.form.password,
-                            password_confirmation:
-                                this.form.password
+                            password_confirmation: this.form.password
                         },
-                        this.authConfig()
+                        config
                     )
 
                     this.form.password = ''
@@ -428,65 +346,61 @@ export default {
                 this.showToast('CHANGES SAVED')
             } catch (error) {
                 console.error(
-                    'Profile update error:',
-                    error.response?.status,
+                    'Neizdevās saglabāt izmaiņas:',
                     error.response?.data || error.message
                 )
 
-                this.errors =
-                    error.response?.data?.errors || {}
-
-                const status = error.response?.status
-
-                if (status === 422) {
-                    this.showToast('PLEASE CHECK YOUR DETAILS')
-                } else if (status === 401) {
-                    this.showToast('AUTHENTICATION FAILED')
-                } else if (status === 403) {
-                    this.showToast('ACTION NOT ALLOWED')
-                } else {
-                    this.showToast('FAILED TO SAVE CHANGES')
+                if (error.message === 'AUTH_REQUIRED') {
+                    this.showToast('PLEASE LOG IN AGAIN')
+                    await this.$router.push('/login')
+                    return
                 }
+
+                if (error.response?.status === 401) {
+                    this.showToast('PLEASE LOG IN AGAIN')
+                    return
+                }
+
+                if (error.response?.status === 422) {
+                    this.errors = error.response.data?.errors || {}
+                    this.showToast('PLEASE CHECK YOUR DETAILS')
+                    return
+                }
+
+                this.showToast('FAILED TO SAVE CHANGES')
             } finally {
                 this.saving = false
             }
         },
 
         async deleteAccount() {
-            if (this.deleting) return
-
             const confirmed = window.confirm(
                 'Delete your account? This cannot be undone.'
             )
 
             if (!confirmed) return
 
-            this.deleting = true
-
             try {
-                await axios.delete(
-                    '/api/profile',
-                    this.authConfig()
-                )
+                const config = this.getAuthConfig()
 
-                auth.user = null
+                await axios.delete('/api/profile', config)
+
                 localStorage.removeItem('token')
+                auth.user = null
+                auth.loaded = true
 
-                await this.$router.push('/login')
+                await this.$router.push('/')
             } catch (error) {
                 console.error(
-                    'Account deletion error:',
-                    error.response?.status,
+                    'Neizdevās dzēst kontu:',
                     error.response?.data || error.message
                 )
 
-                this.showToast(
-                    error.response?.status === 401
-                        ? 'AUTHENTICATION FAILED'
-                        : 'FAILED TO DELETE ACCOUNT'
-                )
-            } finally {
-                this.deleting = false
+                if (error.response?.status === 401) {
+                    this.showToast('PLEASE LOG IN AGAIN')
+                } else {
+                    this.showToast('FAILED TO DELETE ACCOUNT')
+                }
             }
         },
 
@@ -500,7 +414,13 @@ export default {
             this.toastTimer = setTimeout(() => {
                 this.toast = ''
                 this.toastTimer = null
-            }, 3000)
+            }, 2500)
+        }
+    },
+
+    beforeUnmount() {
+        if (this.toastTimer) {
+            clearTimeout(this.toastTimer)
         }
     }
 }
@@ -513,7 +433,6 @@ export default {
     --muted: #555;
     --link: #5aa9e6;
     --serif: 'Italiana', serif;
-
     padding: 0 0.6rem 6rem;
     background: #fff;
     color: #000;
@@ -541,7 +460,6 @@ export default {
     outline-offset: 3px;
 }
 
-/* ---------- Hero ---------- */
 .profile__hero {
     position: relative;
     height: 21rem;
@@ -573,7 +491,6 @@ export default {
     letter-spacing: 0.02em;
 }
 
-/* ---------- User ---------- */
 .user {
     display: flex;
     flex-wrap: wrap;
@@ -641,7 +558,6 @@ export default {
     color: var(--muted);
 }
 
-/* ---------- My destinations ---------- */
 .mine {
     padding: 3.5rem 1rem 0;
 }
@@ -754,7 +670,6 @@ export default {
     font-size: 0.95rem;
 }
 
-/* ---------- Account details ---------- */
 .account {
     display: flex;
     flex-wrap: wrap;
@@ -857,7 +772,8 @@ export default {
     background: #222;
 }
 
-.account__save:disabled {
+.account__save:disabled,
+.account__delete:disabled {
     cursor: default;
     opacity: 0.6;
 }
@@ -874,7 +790,6 @@ export default {
     cursor: pointer;
 }
 
-/* ---------- Toast ---------- */
 .toast {
     position: fixed;
     top: 1.5rem;
@@ -901,7 +816,6 @@ export default {
     transform: translate(-50%, -1rem);
 }
 
-/* ---------- Mobile ---------- */
 @media (max-width: 700px) {
     .profile__hero {
         height: 16rem;
