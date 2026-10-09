@@ -14,7 +14,8 @@ class DestinationController extends Controller
      */
     public function index()
     {
-        //
+        $destinations = Destination::with('place')->get();
+        return DestinationResource::collection($destinations);
     }
 
     /**
@@ -35,22 +36,21 @@ class DestinationController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $destination = Destination::with('place')->findOrFail($id);
+        return new DestinationResource($destination);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(DestinationRequest $request, string $id)
     {
-        //
-    }
+        $destination = Destination::findOrFail($id);
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $destination->update($request->validated());
+
+        $destination->load('place');
+
+        return new DestinationResource($destination);
     }
 }

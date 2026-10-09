@@ -3,9 +3,9 @@ import Home from '../components/pages/Home.vue'
 import Discover from '../components/pages/Discover.vue'
 import Destination from '../components/pages/Destination.vue' 
 import AddDestination from '../components/pages/AddDestination.vue'
-
 import Login from '../components/pages/Login.vue'
 import Register from '../components/pages/Register.vue'
+import Profile from '../components/pages/Profile.vue'
 
 
 const routes = [
@@ -13,6 +13,7 @@ const routes = [
     { path: '/discover', component: Discover },
     { path: '/destination/:id', component: Destination },
     { path: '/add-destination', component: AddDestination },
+    { path: '/profile', component: Profile },
     { path: '/login', component: Login, meta: { hideHeader: true } },
     { path: '/register', component: Register, meta: { hideHeader: true }},
 ]
