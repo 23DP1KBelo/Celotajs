@@ -1,12 +1,5 @@
 <template>
     <main class="add">
-        <transition name="toast">
-            <div v-if="toast" class="toast" role="alert">
-                <span>Please register to add destination</span>
-                <router-link to="/register">REGISTER</router-link>
-            </div>
-        </transition>
-
         <div class="add__inner">
             <router-link to="/discover" class="add__back">
                 <svg width="30" height="8" viewBox="0 0 30 8" aria-hidden="true">
@@ -16,79 +9,149 @@
             </router-link>
 
             <h1>ADD A DESTINATION</h1>
-            <p class="add__lead">SHARE A PLACE WORTH VISITING AND ADD IT TO THE COLLECTION.</p>
+            <p class="add__lead">SHARE A PLACE WORTH VISITING AND ADD IT TO ONE OF YOUR TRIPS.</p>
+
+            <p v-if="!isLoggedIn && auth.loaded !== false" class="notice" role="alert">
+                Please login to add a destination
+                <router-link to="/login">LOG IN</router-link>
+            </p>
 
             <form class="form" novalidate @submit.prevent="submit">
-                <div class="field">
-                    <label for="title">NAME</label>
-                    <input id="title" v-model.trim="form.title" type="text" placeholder="E.G. GEIRANGERFJORD">
-                    <small v-if="errors.title" class="field__error">{{ errors.title[0] }}</small>
-                </div>
-
-                <div class="row">
+                <fieldset class="lock" :disabled="!isLoggedIn">
                     <div class="field">
-                        <label for="country">COUNTRY</label>
-                        <input id="country" v-model.trim="form.country" type="text" placeholder="E.G. NORWAY">
-                        <small v-if="errors.country" class="field__error">{{ errors.country[0] }}</small>
+                        <label for="title">NAME</label>
+                        <input id="title" v-model.trim="form.title" type="text" placeholder="E.G. GEIRANGERFJORD">
+                        <small v-if="errors.title" class="field__error">{{ errors.title[0] }}</small>
+                    </div>
+
+                    <div class="row">
+                        <div class="field">
+                            <label for="country">COUNTRY</label>
+                            <input id="country" v-model.trim="form.country" type="text" placeholder="E.G. NORWAY">
+                            <small v-if="errors.country" class="field__error">{{ errors.country[0] }}</small>
+                        </div>
+
+                        <div class="field">
+                            <label for="city">CITY</label>
+                            <input id="city" v-model.trim="form.city" type="text" placeholder="E.G. GEIRANGER">
+                            <small v-if="errors.city" class="field__error">{{ errors.city[0] }}</small>
+                        </div>
                     </div>
 
                     <div class="field">
-                        <label for="city">CITY</label>
-                        <input id="city" v-model.trim="form.city" type="text" placeholder="E.G. GEIRANGER">
-                        <small v-if="errors.city" class="field__error">{{ errors.city[0] }}</small>
+                        <label for="category">CATEGORY</label>
+                        <div class="select">
+                            <select id="category" v-model="form.category">
+                                <option value="" disabled>CHOOSE A CATEGORY</option>
+                                <option v-for="item in categories" :key="item" :value="item">
+                                    {{ item.toUpperCase() }}
+                                </option>
+                            </select>
+                            <span class="select__arrow" aria-hidden="true">V</span>
+                        </div>
+                        <small v-if="errors.category" class="field__error">{{ errors.category[0] }}</small>
                     </div>
-                </div>
 
-                <div class="field">
-                    <label for="category">CATEGORY</label>
-                    <div class="select">
-                        <select id="category" v-model="form.category">
-                            <option value="" disabled>CHOOSE A CATEGORY</option>
-                            <option v-for="item in categories" :key="item" :value="item">
-                                {{ item.toUpperCase() }}
-                            </option>
-                        </select>
-                        <span class="select__arrow" aria-hidden="true">V</span>
+                    <fieldset class="field status">
+                        <legend>STATUS</legend>
+                        <label v-for="item in statuses" :key="item.value" class="status__option">
+                            <input v-model="form.status" type="radio" name="status" :value="item.value">
+                            <span>{{ item.label }}</span>
+                        </label>
+                    </fieldset>
+
+                    <!-- Trip: existing or new -->
+                    <fieldset class="field status">
+                        <legend>ADD TO TRIP</legend>
+
+                        <label v-if="trips.length" class="status__option">
+                            <input v-model="tripMode" type="radio" name="tripMode" value="existing">
+                            <span>EXISTING TRIP</span>
+                        </label>
+                        <label class="status__option">
+                            <input v-model="tripMode" type="radio" name="tripMode" value="new">
+                            <span>NEW TRIP</span>
+                        </label>
+                    </fieldset>
+
+                    <div v-if="tripMode === 'existing'" class="field">
+                        <label for="trip">YOUR TRIP</label>
+                        <div class="select">
+                            <select id="trip" v-model="form.trip_id">
+                                <option value="" disabled>CHOOSE A TRIP</option>
+                                <option v-for="trip in trips" :key="trip.id" :value="trip.id">
+                                    {{ trip.name }}
+                                </option>
+                            </select>
+                            <span class="select__arrow" aria-hidden="true">V</span>
+                        </div>
+                        <small v-if="errors.trip_id" class="field__error">{{ errors.trip_id[0] }}</small>
                     </div>
-                    <small v-if="errors.category" class="field__error">{{ errors.category[0] }}</small>
-                </div>
 
-                <fieldset class="field status">
-                    <legend>STATUS</legend>
-                    <label v-for="item in statuses" :key="item.value" class="status__option">
-                        <input v-model="form.status" type="radio" name="status" :value="item.value">
-                        <span>{{ item.label }}</span>
-                    </label>
+                    <div v-else class="trip-new">
+                        <div class="field">
+                            <label for="trip_name">TRIP NAME</label>
+                            <input
+                                id="trip_name"
+                                v-model.trim="form.trip_name"
+                                type="text"
+                                maxlength="100"
+                                placeholder="E.G. SUMMER IN NORWAY"
+                            >
+                            <small v-if="errors.trip_name" class="field__error">{{ errors.trip_name[0] }}</small>
+                        </div>
+
+                        <div class="field">
+                            <label for="trip_description">TRIP DESCRIPTION</label>
+                            <textarea
+                                id="trip_description"
+                                v-model.trim="form.trip_description"
+                                rows="3"
+                                placeholder="WHAT IS THIS TRIP ABOUT?"
+                            />
+                            <small v-if="errors.trip_description" class="field__error">{{ errors.trip_description[0] }}</small>
+                        </div>
+                    </div>
+
+                    <!-- Visibility -->
+                    <fieldset class="field status">
+                        <legend>VISIBILITY</legend>
+                        <label v-for="item in visibilities" :key="item.value" class="status__option">
+                            <input v-model="form.visibility" type="radio" name="visibility" :value="item.value">
+                            <span>{{ item.label }}</span>
+                        </label>
+                        <p class="hint">{{ visibilityHint }}</p>
+                    </fieldset>
+
+                    <div class="field">
+                        <label for="description">DESCRIPTION</label>
+                        <textarea
+                            id="description"
+                            v-model.trim="form.description"
+                            rows="4"
+                            placeholder="WHAT MAKES THIS PLACE SPECIAL?"
+                        />
+                        <small v-if="errors.description" class="field__error">{{ errors.description[0] }}</small>
+                    </div>
+
+                    <div class="field">
+                        <label for="image">PHOTO</label>
+                        <label class="drop" :class="{ 'drop--filled': preview }" for="image">
+                            <img v-if="preview" :src="preview" alt="Selected photo preview">
+                            <span v-else>CLICK TO CHOOSE A PHOTO (JPG, PNG, WEBP · MAX 5 MB)</span>
+                        </label>
+                        <input id="image" class="drop__input" type="file" accept="image/*" @change="onFile">
+                        <small v-if="errors.image" class="field__error">{{ errors.image[0] }}</small>
+                    </div>
+
+                    <p v-if="message" class="message" :class="{ 'message--ok': success }" role="status">
+                        {{ message }}
+                    </p>
+
+                    <button type="submit" class="submit" :disabled="loading">
+                        {{ loading ? 'SAVING…' : 'ADD DESTINATION' }}
+                    </button>
                 </fieldset>
-
-                <div class="field">
-                    <label for="description">DESCRIPTION</label>
-                    <textarea
-                        id="description"
-                        v-model.trim="form.description"
-                        rows="4"
-                        placeholder="WHAT MAKES THIS PLACE SPECIAL?"
-                    />
-                    <small v-if="errors.description" class="field__error">{{ errors.description[0] }}</small>
-                </div>
-
-                <div class="field">
-                    <label for="image">PHOTO</label>
-                    <label class="drop" :class="{ 'drop--filled': preview }" for="image">
-                        <img v-if="preview" :src="preview" alt="Selected photo preview">
-                        <span v-else>CLICK TO CHOOSE A PHOTO (JPG, PNG, WEBP · MAX 5 MB)</span>
-                    </label>
-                    <input id="image" class="drop__input" type="file" accept="image/*" @change="onFile">
-                    <small v-if="errors.image" class="field__error">{{ errors.image[0] }}</small>
-                </div>
-
-                <p v-if="message" class="message" :class="{ 'message--ok': success }" role="status">
-                    {{ message }}
-                </p>
-
-                <button type="submit" class="submit" :disabled="loading">
-                    {{ loading ? 'SAVING…' : 'ADD DESTINATION' }}
-                </button>
             </form>
         </div>
     </main>
@@ -96,6 +159,7 @@
 
 <script>
 import axios from 'axios'
+import { auth } from '../../auth.js'
 
 const emptyForm = () => ({
     title: '',
@@ -103,12 +167,18 @@ const emptyForm = () => ({
     city: '',
     category: '',
     status: 'not_visited',
-    description: ''
+    description: '',
+    visibility: 'private',
+    trip_id: '',
+    trip_name: '',
+    trip_description: ''
 })
 
 export default {
     data() {
         return {
+            auth,
+
             form: emptyForm(),
             file: null,
             preview: '',
@@ -118,22 +188,64 @@ export default {
                 { value: 'not_visited', label: 'NEAPMEKLĒTS' },
                 { value: 'visited', label: 'APMEKLĒTS' }
             ],
+            visibilities: [
+                { value: 'private', label: 'PRIVATE' },
+                { value: 'public', label: 'PUBLIC' }
+            ],
+
+            // user's trips come from GET /api/user/trips
+            trips: [],
+            tripMode: 'new',
 
             errors: {},
             message: '',
             success: false,
-            loading: false,
-            toast: false,
-            toastTimer: null
+            loading: false
+        }
+    },
+
+    computed: {
+        isLoggedIn() {
+            return !!auth.user
+        },
+
+        visibilityHint() {
+            return this.form.visibility === 'public'
+                ? 'EVERYONE CAN FIND THIS PLACE ON THE DISCOVER PAGE.'
+                : 'ONLY YOU CAN SEE THIS PLACE, INSIDE YOUR TRIP.'
+        }
+    },
+
+    watch: {
+        isLoggedIn: {
+            immediate: true,
+            handler(value) {
+                if (value) {
+                    this.loadTrips()
+                }
+            }
         }
     },
 
     beforeUnmount() {
-        clearTimeout(this.toastTimer)
         this.clearPreview()
     },
 
     methods: {
+        async loadTrips() {
+            try {
+                const { data } = await axios.get('/api/user/trips', { withCredentials: true })
+
+                this.trips = Array.isArray(data) ? data : (data.trips || [])
+            } catch (error) {
+                console.log(error.response)
+                this.trips = []
+            }
+
+            // no trips yet -> the only option is to create a new one
+            this.tripMode = this.trips.length ? 'existing' : 'new'
+        },
+
         onFile(event) {
             const file = event.target.files[0]
             this.errors = { ...this.errors, image: undefined }
@@ -172,6 +284,14 @@ export default {
                 }
             })
 
+            if (this.tripMode === 'existing' && !this.form.trip_id) {
+                errors.trip_id = ['Please choose a trip.']
+            }
+
+            if (this.tripMode === 'new' && !this.form.trip_name) {
+                errors.trip_name = ['Please enter a trip name.']
+            }
+
             this.errors = errors
             return Object.keys(errors).length === 0
         },
@@ -179,16 +299,29 @@ export default {
         async submit() {
             this.message = ''
 
-            if (!this.validate()) {
+            if (!this.isLoggedIn || !this.validate()) {
                 return
             }
 
             this.loading = true
 
             try {
-                
+                // image goes with the text fields, so use FormData (multipart)
                 const data = new FormData()
-                Object.entries(this.form).forEach(([key, value]) => data.append(key, value))
+
+                ;['title', 'country', 'city', 'category', 'status', 'description'].forEach((key) => {
+                    data.append(key, this.form[key])
+                })
+
+                data.append('is_public', this.form.visibility === 'public' ? '1' : '0')
+
+                if (this.tripMode === 'existing') {
+                    data.append('trip_id', this.form.trip_id)
+                } else {
+                    data.append('trip_name', this.form.trip_name)
+                    data.append('trip_description', this.form.trip_description)
+                }
+
                 if (this.file) {
                     data.append('image', this.file)
                 }
@@ -202,11 +335,15 @@ export default {
                 this.file = null
                 this.clearPreview()
                 document.getElementById('image').value = ''
+
+                // a newly created trip should now appear in the list
+                await this.loadTrips()
             } catch (error) {
                 console.log(error.response)
 
                 if (error.response?.status === 401) {
-                    this.showToast()
+                    // session expired -> fields get locked again
+                    auth.user = null
                     return
                 }
 
@@ -216,14 +353,6 @@ export default {
             } finally {
                 this.loading = false
             }
-        },
-
-        showToast() {
-            this.toast = true
-            clearTimeout(this.toastTimer)
-            this.toastTimer = setTimeout(() => {
-                this.toast = false
-            }, 4000)
         }
     }
 }
@@ -276,7 +405,40 @@ export default {
     font-size: 0.75rem;
 }
 
+/* ---------- Guest notice + lock ---------- */
+.notice {
+    margin: -1.5rem 0 2.5rem;
+    padding: 1rem 1.5rem;
+    border: 1px solid #000;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 400;
+    text-align: center;
+}
 
+.notice a {
+    margin-left: 0.8rem;
+    color: var(--link);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.lock {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.lock:disabled {
+    opacity: 0.45;
+}
+
+.lock:disabled * {
+    cursor: not-allowed !important;
+}
+
+/* ---------- Fields ---------- */
 .row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -337,7 +499,7 @@ export default {
     color: var(--error);
 }
 
-
+/* select with a "V" arrow, like on the Discover page */
 .select {
     position: relative;
 }
@@ -358,7 +520,7 @@ export default {
     pointer-events: none;
 }
 
-
+/* radio groups styled as pills (status, trip mode, visibility) */
 .status {
     flex-direction: row;
     flex-wrap: wrap;
@@ -401,7 +563,25 @@ export default {
     outline-offset: 3px;
 }
 
+.hint {
+    width: 100%;
+    margin: 0.4rem 0 0;
+    font-size: 0.65rem;
+    color: var(--muted);
+}
 
+/* new trip sub-form */
+.trip-new {
+    margin: 0 0 2.4rem;
+    padding-left: 1.2rem;
+    border-left: 1px solid #bdbdbd;
+}
+
+.trip-new .field:last-child {
+    margin-bottom: 0;
+}
+
+/* photo drop area */
 .drop {
     display: flex;
     align-items: center;
@@ -441,12 +621,11 @@ export default {
     opacity: 0;
 }
 
-.drop__input:focus-visible + .field__error,
 .drop__input:focus-visible {
     outline: 2px solid var(--link);
 }
 
-
+/* ---------- Submit ---------- */
 .message {
     margin: 0 0 1.2rem;
     font-size: 0.75rem;
@@ -487,42 +666,6 @@ export default {
 .submit:focus-visible {
     outline: 2px solid var(--link);
     outline-offset: 3px;
-}
-
-
-.toast {
-    position: fixed;
-    top: 1.5rem;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    padding: 1rem 1.8rem;
-    border-radius: 999px;
-    background: #000;
-    color: #fff;
-    font-size: 0.8rem;
-    font-weight: 400;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-}
-
-.toast a {
-    color: #8cc4f0;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-}
-
-.toast-enter-active,
-.toast-leave-active {
-    transition: opacity 0.3s, transform 0.3s;
-}
-
-.toast-enter-from,
-.toast-leave-to {
-    opacity: 0;
-    transform: translate(-50%, -1rem);
 }
 
 @media (max-width: 600px) {

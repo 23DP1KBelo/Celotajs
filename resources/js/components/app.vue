@@ -27,7 +27,7 @@ async function handleLogout() {
                     ADD DESTINATION
                 </router-link>
                 <router-link to="/profile">PROFILE</router-link>
-                <router-link to="/statistics">STATISTICS</router-link>
+    
             </nav>
 
             <div class="header__right">
