@@ -56,6 +56,10 @@
                         <span class="card__badge" :class="{ 'card__badge--dark': trip.status === 'visited' }">{{ trip.status === 'visited' ? 'VISITED' : 'WANT TO VISIT' }}</span>
                         <span class="card__name">{{ trip.title || trip.name }}</span>
                     </article>
+<<<<<<< HEAD
+=======
+
+>>>>>>> 2e54151cc940e3eeac3d5bb792fc8c44c472df49
                 </li>
             </ul>
         </section>
@@ -297,6 +301,7 @@
 <script>
 import axios from 'axios'
 import { auth, fetchUser } from '../../auth.js'
+
 export default {
     data() {
         return {
@@ -319,7 +324,7 @@ export default {
                 date_till: '',
                 budget: '',
                 status: 'unvisited',
-                category: '',
+                category: ''
             },
             tripImage: null,
             tripErrors: {},
@@ -334,39 +339,62 @@ export default {
             toastTimer: null
         }
     },
+
     computed: {
         username() {
-            return this.user?.username
-                || this.user?.Username
-                || ''
+            return this.user?.username || this.user?.Username || ''
         },
+
         memberSince() {
             if (!this.user?.created_at) return ''
+
             const date = new Date(this.user.created_at)
+
             return Number.isNaN(date.getTime())
                 ? ''
                 : date.getFullYear()
         },
+
         saved() {
             const unique = new Map()
+
             this.trips.forEach(trip => {
-                (trip.destinations || trip.trip_destinations || []).forEach(place => unique.set(place.id, place))
+                const destinations =
+                    trip.destinations || trip.trip_destinations || []
+
+                destinations.forEach(place => {
+                    unique.set(place.id, place)
+                })
             })
+
             return [...unique.values()]
         },
+
         filteredDestinations() {
-            return this.saved.filter(place => this.filter === 'all' || place.status === this.filter || (this.filter === 'unvisited' && place.status === 'not_visited'))
+            return this.saved.filter(place =>
+                this.filter === 'all' ||
+                place.status === this.filter ||
+                (this.filter === 'unvisited' && place.status === 'not_visited')
+            )
         },
+
         filteredTrips() {
-            return this.trips.filter(trip => this.filter === 'all' || trip.status === this.filter || (this.filter === 'unvisited' && trip.status === 'not_visited'))
+            return this.trips.filter(trip =>
+                this.filter === 'all' ||
+                trip.status === this.filter ||
+                (this.filter === 'unvisited' && trip.status === 'not_visited')
+            )
         },
+
         visitedCount() {
             return this.saved.filter(place => place.status === 'visited').length
         },
+
         countriesCount() {
             return new Set(this.saved.map(place => place.country)).size
         }
     },
+<<<<<<< HEAD
     async mounted() {
         await fetchUser()
         this.user = auth.user
@@ -387,9 +415,27 @@ export default {
                 Accept: 'application/json',
             },
         }
+=======
 
-        this.form.email = this.user.email || ''
+    async mounted() {
+        try {
+            await fetchUser()
+            this.user = auth.user
+
+            if (!this.user) {
+                await this.$router.push('/login')
+                return
+            }
+>>>>>>> 2e54151cc940e3eeac3d5bb792fc8c44c472df49
+
+            this.form.email = this.user.email || ''
+            await this.loadTrips()
+        } catch (error) {
+            console.error('Failed to load profile:', error)
+            this.showToast('FAILED TO LOAD PROFILE')
+        }
     },
+<<<<<<< HEAD
         onTripImageChange(event) {
         this.tripImage = event.target.files[0] || null
         delete this.tripErrors.image
@@ -413,15 +459,76 @@ export default {
                 this.showToast('FAILED TO LOAD TRIPS')
             } finally {
                 this.loadingTrips = false
+=======
+
+    methods: {
+        getAuthConfig() {
+            const token = localStorage.getItem('token')
+
+            if (!token) {
+                throw new Error('AUTH_REQUIRED')
+            }
+
+            return {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/json'
+                }
+>>>>>>> 2e54151cc940e3eeac3d5bb792fc8c44c472df49
             }
         },
+
+        async loadTrips() {
+            this.loadingTrips = true
+
+            try {
+                const { data } = await axios.get(
+                    '/api/user/trips',
+                    this.getAuthConfig()
+                )
+
+                const list = Array.isArray(data)
+                    ? data
+                    : Array.isArray(data.data)
+                        ? data.data
+                        : data.trips || []
+
+                this.trips = list.map(trip => ({
+                    ...trip,
+                    date_from: trip.date_from || trip.date_form || '',
+                    destinations:
+                        trip.destinations || trip.trip_destinations || []
+                }))
+            } catch (error) {
+                console.error(
+                    'Failed to load trips:',
+                    error.response?.data || error.message
+                )
+
+                if (
+                    error.message === 'AUTH_REQUIRED' ||
+                    error.response?.status === 401
+                ) {
+                    this.showToast('PLEASE LOG IN AGAIN')
+                } else {
+                    this.showToast('FAILED TO LOAD TRIPS')
+                }
+            } finally {
+                this.loadingTrips = false
+            }
+        },
+
         visibleDestinations(trip) {
             const places = trip.destinations || []
+
             return this.filter === 'all'
                 ? places
                 : places.filter(place => place.status === this.filter)
         },
-       openModal() {
+
+        openModal() {
+            this.step = 1
+
             this.tripForm = {
                 title: '',
                 description: '',
@@ -429,55 +536,40 @@ export default {
                 date_till: '',
                 budget: '',
                 status: 'unvisited',
-                category: '',
+                category: ''
             }
+
             this.tripImage = null
             this.tripErrors = {}
             this.modal = true
-            this.$nextTick(() => this.$refs.tripName?.focus())
+
+            this.$nextTick(() => {
+                this.$refs.tripName?.focus()
+            })
         },
+
         closeModal() {
             this.modal = false
         },
-async nextTripStep() {
-    this.tripErrors = {}
-    if (this.step === 1) {
-        if (!this.tripForm.title.trim()) {
-            this.tripErrors.title = ['This field is required.']
-            return
-        }
-    }
-    if (this.step === 2) {
-        if (!this.tripForm.date_from) {
-            this.tripErrors.date_from = ['Please select a start date.']
-            return
-        }
-        if (!this.tripForm.date_till) {
-            this.tripErrors.date_till = ['Please select an end date.']
-            return
-        }
-        if (this.tripForm.date_till <= this.tripForm.date_from) {
-            this.tripErrors.date_till = ['The end date must be after the start date.']
-            return
-        }
-        if (this.tripForm.budget !== '' && Number(this.tripForm.budget) < 0) {
-            this.tripErrors.budget = ['Budget must be zero or greater.']
-            return
-        }
-    }
-    this.step += 1
-},
-async createTrip() {
-    if (this.creating) return
-    this.creating = true
-    this.tripErrors = {}
-    try {
-        const data = new FormData()
-        data.append('user_id', String(this.user.id))
-        Object.entries(this.tripForm).forEach(([key, value]) => {
-            if (value !== '' && value !== null && value !== undefined) {
-                data.append(key, String(value))
+
+        onTripImageChange(event) {
+            const file = event.target.files?.[0] || null
+
+            delete this.tripErrors.image
+            this.tripImage = null
+
+            if (!file) return
+
+            const allowedTypes = ['image/jpeg', 'image/png']
+
+            if (!allowedTypes.includes(file.type)) {
+                event.target.value = ''
+                this.tripErrors.image = [
+                    'Attēlam jābūt JPG vai PNG formātā.'
+                ]
+                return
             }
+<<<<<<< HEAD
         })
         if (this.tripImage) {
             data.append('image', this.tripImage)
@@ -523,11 +615,161 @@ async saveChanges() {
             this.errors = {}
             this.saving = true
             try {
+=======
+
+            if (file.size > 2 * 1024 * 1024) {
+                event.target.value = ''
+                this.tripErrors.image = [
+                    'Attēla izmērs nedrīkst pārsniegt 2 MB.'
+                ]
+                return
+            }
+
+            this.tripImage = file
+        },
+
+        nextTripStep() {
+            this.tripErrors = {}
+
+            if (this.step === 1) {
+                if (!this.tripForm.title.trim()) {
+                    this.tripErrors.title = [
+                        'Ceļojuma nosaukums ir obligāts.'
+                    ]
+                    return
+                }
+
+                this.step = 2
+                return
+            }
+
+            if (this.step === 2) {
+                if (!this.tripForm.date_from) {
+                    this.tripErrors.date_from = [
+                        'Norādi ceļojuma sākuma datumu.'
+                    ]
+                    return
+                }
+
+                if (!this.tripForm.date_till) {
+                    this.tripErrors.date_till = [
+                        'Norādi ceļojuma beigu datumu.'
+                    ]
+                    return
+                }
+
+                if (this.tripForm.date_till <= this.tripForm.date_from) {
+                    this.tripErrors.date_till = [
+                        'Beigu datumam jābūt vēlākam par sākuma datumu.'
+                    ]
+                    return
+                }
+
+>>>>>>> 2e54151cc940e3eeac3d5bb792fc8c44c472df49
                 if (
+                    this.tripForm.budget !== '' &&
+                    Number(this.tripForm.budget) < 0
+                ) {
+                    this.tripErrors.budget = [
+                        'Budžets nedrīkst būt negatīvs.'
+                    ]
+                    return
+                }
+
+                this.step = 3
+            }
+        },
+
+        async createTrip() {
+            if (this.creating) return
+
+            this.creating = true
+            this.tripErrors = {}
+
+            try {
+                const formData = new FormData()
+
+                // Saglabāts saderībai ar pašreizējo backend validāciju.
+                // Drošāk ir user_id noteikt Laravel kontrolierī.
+                formData.append('user_id', String(this.user.id))
+
+                Object.entries(this.tripForm).forEach(([key, value]) => {
+                    if (value !== '' && value !== null && value !== undefined) {
+                        formData.append(key, String(value))
+                    }
+                })
+
+                if (this.tripImage) {
+                    formData.append('image', this.tripImage)
+                }
+
+                const response = await axios.post(
+                    '/api/trips',
+                    formData,
+                    this.getAuthConfig()
+                )
+
+                console.log('Trip created:', response.data)
+
+                this.closeModal()
+                this.step = 1
+
+                this.tripForm = {
+                    title: '',
+                    description: '',
+                    date_from: '',
+                    date_till: '',
+                    budget: '',
+                    status: 'unvisited',
+                    category: ''
+                }
+
+                this.tripImage = null
+
+                await this.loadTrips()
+                this.showToast('TRIP CREATED')
+            } catch (error) {
+                console.error(
+                    'Failed to create trip:',
+                    error.response?.data || error.message
+                )
+
+                if (
+                    error.message === 'AUTH_REQUIRED' ||
+                    error.response?.status === 401
+                ) {
+                    this.showToast('PLEASE LOG IN AGAIN')
+                    return
+                }
+
+                this.tripErrors = error.response?.data?.errors || {}
+
+                this.tripErrors.general = [
+                    error.response?.data?.message ||
+                    'Neizdevās izveidot ceļojumu.'
+                ]
+
+                this.step = 3
+            } finally {
+                this.creating = false
+            }
+        },
+
+        async saveChanges() {
+            if (this.saving) return
+
+            this.saving = true
+            this.errors = {}
+
+            try {
+                const config = this.getAuthConfig()
+
+                if (
+                    this.form.email &&
                     this.form.email !== this.user?.email
-                    && this.form.email
                 ) {
                     const { data } = await axios.put(
+<<<<<<< HEAD
                     '/api/profile/email',
                     {
                         email: this.form.email
@@ -544,14 +786,26 @@ async saveChanges() {
                         { email },
                         config
                     )
+=======
+                        '/api/profile/email',
+                        { email: this.form.email },
+                        config
+                    )
+
+>>>>>>> 2e54151cc940e3eeac3d5bb792fc8c44c472df49
                     if (data.user) {
                         this.user = data.user
+                        auth.user = data.user
                     } else if (this.user) {
                         this.user.email = this.form.email
                     }
 
-                    this.form.email = this.user.email || ''
+                    this.form.email = this.user?.email || ''
                 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 2e54151cc940e3eeac3d5bb792fc8c44c472df49
                 if (this.form.password) {
                     await axios.put(
                         '/api/profile/password',
@@ -562,70 +816,103 @@ async saveChanges() {
                         },
                         config
                     )
+
                     this.form.password = ''
                     this.form.current_password = ''
                 }
+
                 this.showToast('CHANGES SAVED')
             } catch (error) {
                 console.error(
-                    'Neizdevās saglabāt izmaiņas:',
+                    'Failed to save changes:',
                     error.response?.data || error.message
                 )
 
-                if (error.message === 'AUTH_REQUIRED') {
+                if (
+                    error.message === 'AUTH_REQUIRED' ||
+                    error.response?.status === 401
+                ) {
                     this.showToast('PLEASE LOG IN AGAIN')
                     await this.$router.push('/login')
                     return
                 }
 
-                this.errors =
-                    error.response?.data?.errors || {}
-                if (error.response?.status === 401) {
-                    this.showToast('PLEASE LOG IN AGAIN')
-                    return
-                }
+                this.errors = error.response?.data?.errors || {}
 
                 if (error.response?.status === 422) {
-                    this.errors = error.response.data?.errors || {}
                     this.showToast('PLEASE CHECK YOUR DETAILS')
-                    return
+                } else {
+                    this.showToast('FAILED TO SAVE CHANGES')
                 }
-
-                this.showToast('FAILED TO SAVE CHANGES')
             } finally {
                 this.saving = false
             }
         },
+
         async deleteAccount() {
             const confirmed = window.confirm(
-                'Delete your account? This cannot be undone.'
+                'Vai tiešām vēlies dzēst savu kontu? Šo darbību nevar atsaukt.'
             )
+<<<<<<< HEAD
             if (!confirmed) return
             try {
                 await axios.delete('/api/profile', {
                     withCredentials: true
                 })
                 auth.user = null
+=======
+
+            if (!confirmed) return
+
+            try {
+                await axios.delete(
+                    '/api/profile',
+                    this.getAuthConfig()
+                )
+
+                localStorage.removeItem('token')
+                localStorage.removeItem('user')
+
+                auth.user = null
+                this.user = null
+
+>>>>>>> 2e54151cc940e3eeac3d5bb792fc8c44c472df49
                 await this.$router.push('/')
             } catch (error) {
                 console.error(
-                    'Neizdevās dzēst kontu:',
+                    'Failed to delete account:',
                     error.response?.data || error.message
                 )
+<<<<<<< HEAD
                 this.showToast('FAILED TO DELETE ACCOUNT')
+=======
+
+                if (
+                    error.message === 'AUTH_REQUIRED' ||
+                    error.response?.status === 401
+                ) {
+                    this.showToast('PLEASE LOG IN AGAIN')
+                } else {
+                    this.showToast('FAILED TO DELETE ACCOUNT')
+                }
+>>>>>>> 2e54151cc940e3eeac3d5bb792fc8c44c472df49
             }
         },
+
         showToast(message) {
             this.toast = message
+
             if (this.toastTimer) {
                 clearTimeout(this.toastTimer)
             }
+
             this.toastTimer = setTimeout(() => {
                 this.toast = ''
                 this.toastTimer = null
             }, 2500)
         }
     },
+
     beforeUnmount() {
         if (this.toastTimer) {
             clearTimeout(this.toastTimer)
@@ -633,6 +920,7 @@ async saveChanges() {
     }
 }
 </script>
+
 <style scoped>
 @import url('https\\://fonts.googleapis.com/css2?family=Italiana&family=Jost:wght@300;400&display=swap');
 .profile {
@@ -1249,10 +1537,6 @@ async saveChanges() {
     opacity: 0;
     transform: translate(-50%, -1rem);
 }
-<<<<<<< HEAD
-
-/* Mobile */
-=======
 .trip-form__row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1283,7 +1567,6 @@ async saveChanges() {
     }
 }
 /* ---------- Mobile ---------- */
->>>>>>> polina
 @media (max-width: 700px) {
     .profile__hero {
         height: 16rem;
