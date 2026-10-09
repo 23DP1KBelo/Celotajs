@@ -7,13 +7,14 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/trip-destinations/recommendations', [TripDestinationController::class, 'recommendations']);
 Route::get('/recommendations/search', [TripDestinationController::class, 'searchRecommendations']);
+Route::get('/recommendations/category', [ TripDestinationController::class,'filterByCategory']);
 
 // Authentication
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
-
+    Route::get('/recommendations/status', [ TripDestinationController::class,'filterByStatus']);
     // Current user
     Route::get('/me', [AuthController::class, 'me']);
 

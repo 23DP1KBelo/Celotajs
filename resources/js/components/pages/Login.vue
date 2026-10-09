@@ -43,11 +43,13 @@
                     <p v-if="message" class="login__message" role="status">
                         {{ message }}
                     </p>
-
-                    <button type="submit" class="login__submit">
-                        SIGN IN
+                    <button
+                        type="submit"
+                        class="login__submit"
+                        :disabled="loading"
+                    >
+                        {{ loading ? 'LOGGING IN...' : 'SIGN IN' }}
                     </button>
-
                     <p class="login__switch">
                         NEW TO WANDERLIST?
                         <router-link to="/register">CREATE AN ACCOUNT</router-link>
@@ -58,50 +60,52 @@
     </main>
 </template>
 
+
 <script>
-import { fetchUser } from '../../auth.js'
-import axios from 'axios'
+import { login as loginUser } from '../../auth.js'
 
 export default {
     data() {
         return {
             Username: '',
             password: '',
-            message: ''
+            message: '',
+            loading: false
         }
     },
 
     methods: {
         async login() {
+            this.message = ''
+            this.loading = true
+
             try {
-                await axios.get('/sanctum/csrf-cookie', {
-                    withCredentials: true
-                })
-
-                const response = await axios.post('/api/login', {
-                    Username: this.Username,
-                    password: this.password
-                }, {
-                    withCredentials: true
-                })
-
-                console.log(response.data)
-                await fetchUser()
-                this.$router.push('/')
+                await loginUser(
+                    this.Username,
+                    this.password
+                )
 
                 this.message = 'Login successful!'
-                this.$router.push('/profile')
 
+                await this.$router.push('/profile')
             } catch (error) {
-                console.log(error.response)
+                console.error(
+                    'Login error:',
+                    error.response?.data || error.message
+                )
 
                 this.message =
-                    error.response?.data?.message || 'Login failed'
+                    error.response?.data?.message ||
+                    'Login failed. Please try again.'
+            } finally {
+                this.loading = false
             }
         }
-    } 
+    }
 }
 </script>
+
+
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Italiana&family=Jost:wght@300;400&display=swap');
 
