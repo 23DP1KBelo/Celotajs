@@ -128,7 +128,7 @@
 </template>
 <script>
 import axios from 'axios'
-import { auth } from '../../auth.js'
+import { auth, fetchUser } from '../../auth.js'
 
 export default {
     data() {
@@ -171,7 +171,7 @@ export default {
         ]
 
         return {
-            user: null,
+            user: auth.user,
 
             filter: 'all',
 
@@ -241,26 +241,25 @@ export default {
         }
     },
 
-    async mounted() {
-        await this.loadProfile()
+    authConfig() {
+        const token = localStorage.getItem('token')
+
+        return {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        }
     },
 
     methods: {
-        async loadProfile() {
-            try {
-                const { data } = await axios.get('/api/profile', {
-                    withCredentials: true
-                })
+        async mounted() {
+            await fetchUser()
+            this.user = auth.user
 
-                this.user = data.user || null
-                this.form.email = data.user?.email || ''
-            } catch (error) {
-                console.error(
-                    'Neizdevās ielādēt profilu:',
-                    error.response?.data || error.message
-                )
-
-                this.showToast('FAILED TO LOAD PROFILE')
+            if (this.user) {
+                this.form.email = this.user.email || ''
+            } else {
+                this.$router.push('/login')
             }
         },
 
