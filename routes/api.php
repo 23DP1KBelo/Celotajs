@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/trip-destinations/recommendations', [TripDestinationController::class, 'recommendations']);
 Route::get('/recommendations/search', [TripDestinationController::class, 'searchRecommendations']);
 Route::get('/recommendations/category', [ TripDestinationController::class,'filterByCategory']);
+Route::get('/recommendations/status', [ TripDestinationController::class,'filterByStatus']);
+Route::get('/trip/destinations/{id}', [TripDestinationController::class, 'show']);
 
 // Authentication
 Route::post('/register', [AuthController::class, 'register']);

@@ -138,7 +138,14 @@ class TripDestinationController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $tripDestination = TripDestination::with([
+            'trip',
+            'destination.place.country',
+        ])
+            ->where('destination_id', $id)
+            ->firstOrFail();
+
+        return response()->json($tripDestination);
     }
 
     /**

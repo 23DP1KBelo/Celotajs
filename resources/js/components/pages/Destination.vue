@@ -6,19 +6,43 @@
                 <router-link to="/register">REGISTER</router-link>
             </div>
         </transition>
+
         <div class="place__inner">
             <router-link to="/discover" class="place__back">
-                <svg width="30" height="8" viewBox="0 0 30 8" aria-hidden="true">
-                    <path d="M30 4H1M4 1L1 4l3 3" fill="none" stroke="currentColor" stroke-width="0.8" />
+                <svg
+                    width="30"
+                    height="8"
+                    viewBox="0 0 30 8"
+                    aria-hidden="true"
+                >
+                    <path
+                        d="M30 4H1M4 1L1 4l3 3"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="0.8"
+                    />
                 </svg>
                 BACK TO DISCOVER
             </router-link>
 
-            <template v-if="place">
+            <p v-if="loading" class="place__missing">
+                LOADING DESTINATION...
+            </p>
+
+            <p v-else-if="error" class="place__missing">
+                {{ error }}
+            </p>
+
+            <template v-else-if="place">
                 <header class="place__head">
                     <div>
                         <h1>{{ place.title }}</h1>
-                        <p class="place__where">{{ place.city }}, {{ place.country }}</p>
+
+                        <p class="place__where">
+                            {{ place.city }}
+                            <span v-if="place.city && place.country">, </span>
+                            {{ place.country }}
+                        </p>
                     </div>
 
                     <button
@@ -30,74 +54,184 @@
                     >
                         {{ added ? '✓ IN MY LIST' : '+ ADD TO MY LIST' }}
                     </button>
-                    </header>
+                </header>
 
-                <img class="place__img" :src="place.image" :alt="place.title">
+                <img
+                    class="place__img"
+                    :src="place.image"
+                    :alt="place.title"
+                    @error="handleImageError"
+                >
 
-                <p class="place__desc">{{ place.description }}</p>
+                <p class="place__desc">
+                    {{ place.description || 'No description available.' }}
+                </p>
 
                 <h2 class="place__sub">BASIC INFORMATION</h2>
+
                 <dl class="info">
                     <div class="info__row">
                         <dt>COUNTRY</dt>
-                        <dd>{{ place.country }}</dd>
+                        <dd>{{ place.country || '—' }}</dd>
                     </div>
+
                     <div class="info__row">
                         <dt>CITY</dt>
-                        <dd>{{ place.city }}</dd>
+                        <dd>{{ place.city || '—' }}</dd>
                     </div>
+
                     <div class="info__row">
                         <dt>CATEGORY</dt>
-                        <dd>{{ place.category }}</dd>
+                        <dd>{{ place.category || '—' }}</dd>
                     </div>
                 </dl>
 
                 <p v-if="!added" class="place__hint">
-                    ADD THIS PLACE TO YOUR LIST TO SET A BUDGET, PRIORITY, AND TRACK YOUR VISIT STATUS.
+                    ADD THIS PLACE TO YOUR LIST TO SET A BUDGET, PRIORITY,
+                    AND TRACK YOUR VISIT STATUS.
                 </p>
             </template>
 
-            <p v-else class="place__missing">PLACE NOT FOUND.</p>
+            <p v-else class="place__missing">
+                PLACE NOT FOUND.
+            </p>
         </div>
     </main>
 </template>
 
 <script>
 import axios from 'axios'
-import { findDestination } from '../../data/destinations.js'
+import { auth } from '../../auth.js'
 
 export default {
     data() {
         return {
-            added: false
+            place: null,
+            added: false,
+            loading: false,
+            error: '',
+            toast: false
         }
     },
 
-    computed: {
-        place() {
-            return findDestination(this.$route.params.id)
-        }
+    mounted() {
+        this.fetchDestination()
     },
 
     watch: {
         '$route.params.id'() {
             this.added = false
+            this.toast = false
+            this.fetchDestination()
         }
     },
 
     methods: {
-        async toggleList() {
-            this.added = !this.added
+        async fetchDestination() {
+            this.loading = true
+            this.error = ''
+            this.place = null
 
             try {
-                await axios.post('/api/my-list', {
-                    destination_id: this.place.id
-                }, {
-                    withCredentials: true
-                })
+                const response = await axios.get(
+                    `/api/trip/destinations/${this.$route.params.id}`
+                )
+
+                const data = response.data
+                const destination = data.destination || {}
+                const location = destination.place || {}
+                const country = location.country || {}
+                const trip = data.trip || {}
+
+                const destinationId =
+                    destination.id ||
+                    data.destination_id ||
+                    data.id ||
+                    this.$route.params.id
+
+                this.place = {
+                    id: destinationId,
+
+                    title:
+                        destination.title ||
+                        destination.name ||
+                        location.name ||
+                        'Travel destination',
+
+                    city: location.name || '',
+
+                    country: country.name || '',
+
+                    category: trip.category || destination.category || '',
+
+                    description:
+                        destination.description ||
+                        location.description ||
+                        trip.description ||
+                        '',
+
+                    image:
+                        destination.image ||
+                        location.image ||
+                        trip.image ||
+                        `https://picsum.photos/seed/destination-${destinationId}/1200/600`
+                }
             } catch (error) {
-                console.log(error.response)
-                this.added = !this.added   
+                console.error(
+                    'Failed to load destination:',
+                    error.response?.data || error.message
+                )
+
+                this.error =
+                    error.response?.status === 404
+                        ? 'PLACE NOT FOUND.'
+                        : 'FAILED TO LOAD DESTINATION.'
+            } finally {
+                this.loading = false
+            }
+        },
+
+        handleImageError(event) {
+            const fallback =
+                `https://picsum.photos/seed/fallback-${this.place?.id || 'travel'}/1200/600`
+
+            if (event.target.src !== fallback) {
+                event.target.src = fallback
+            }
+        },
+
+        async addToList() {
+            if (!auth.user) {
+                this.toast = true
+                return
+            }
+
+            try {
+                const token = localStorage.getItem('token')
+
+                await axios.post(
+                    '/api/my-list',
+                    {
+                        destination_id: this.place.id
+                    },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                )
+
+                this.added = true
+                this.toast = false
+            } catch (error) {
+                console.error(
+                    'Failed to add destination:',
+                    error.response?.data || error.message
+                )
+
+                if (error.response?.status === 401) {
+                    this.toast = true
+                }
             }
         }
     }
