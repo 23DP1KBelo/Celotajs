@@ -43,7 +43,7 @@
 
         <section class="mine">
             <div class="mine__head">
-                <h2>MY DESTINATIONS</h2>
+                <h2>MY TRIPS</h2>
 
                 <div class="tabs" role="tablist">
                     <button
@@ -80,7 +80,7 @@
                         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" aria-hidden="true">
                             <path d="M12 4v16M4 12h16" />
                         </svg>
-                        ADD DESTINATION
+                        ADD TRIPS
                     </router-link>
                 </li>
             </ul>
