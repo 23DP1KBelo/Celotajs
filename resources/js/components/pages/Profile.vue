@@ -126,31 +126,75 @@
         </section>
     </main>
 </template>
-
 <script>
 import axios from 'axios'
 import { auth } from '../../auth.js'
-import { destinations } from '../../data/destinations.js'
 
 export default {
     data() {
+        const destinations = [
+            {
+                id: 1,
+                name: 'Paris',
+                country: 'France',
+                status: 'visited',
+                image: '/image/destinations/paris.jpg'
+            },
+            {
+                id: 2,
+                name: 'Tokyo',
+                country: 'Japan',
+                status: 'not_visited',
+                image: '/image/destinations/tokyo.jpg'
+            },
+            {
+                id: 3,
+                name: 'New York',
+                country: 'USA',
+                status: 'visited',
+                image: '/image/destinations/new-york.jpg'
+            },
+            {
+                id: 4,
+                name: 'Sydney',
+                country: 'Australia',
+                status: 'not_visited',
+                image: '/image/destinations/sydney.jpg'
+            },
+            {
+                id: 5,
+                name: 'Rio de Janeiro',
+                country: 'Brazil',
+                status: 'not_visited',
+                image: '/image/destinations/rio.jpg'
+            }
+        ]
+
         return {
             user: null,
+
             filter: 'all',
+
             tabs: [
                 { value: 'all', label: 'ALL' },
                 { value: 'not_visited', label: 'WANT TO VISIT' },
                 { value: 'visited', label: 'VISITED' }
             ],
 
-            // Pagaidām no statiskajiem datiem, līdz būs /api/my-list
-            saved: destinations.filter((place) => [1, 2, 3].includes(place.id)),
+            destinations,
+
+            // Pagaidām izmantojam statiskus datus.
+            // Vēlāk tos varēs ielādēt no API.
+            saved: destinations.filter(place =>
+                [1, 2, 3].includes(place.id)
+            ),
 
             form: {
                 email: '',
                 password: '',
                 current_password: ''
             },
+
             errors: {},
             saving: false,
             toast: ''
@@ -159,89 +203,178 @@ export default {
 
     computed: {
         username() {
-            return this.user?.username || this.user?.Username || ''
+            return this.user?.username
+                || this.user?.Username
+                || ''
         },
 
         memberSince() {
-            return this.user?.created_at ? new Date(this.user.created_at).getFullYear() : ''
+            if (!this.user?.created_at) return ''
+
+            const date = new Date(this.user.created_at)
+
+            return Number.isNaN(date.getTime())
+                ? ''
+                : date.getFullYear()
         },
 
         visitedCount() {
-            return this.saved.filter((place) => place.status === 'visited').length
+            return this.saved.filter(
+                place => place.status === 'visited'
+            ).length
         },
 
         countriesCount() {
-            return new Set(this.saved.map((place) => place.country)).size
+            return new Set(
+                this.saved.map(place => place.country)
+            ).size
         },
 
         filtered() {
-            return this.filter === 'all'
-                ? this.saved
-                : this.saved.filter((place) => place.status === this.filter)
+            if (this.filter === 'all') {
+                return this.saved
+            }
+
+            return this.saved.filter(
+                place => place.status === this.filter
+            )
         }
     },
 
     async mounted() {
-        try {
-            const { data } = await axios.get('/api/profile', { withCredentials: true })
-            this.user = data.user
-            this.form.email = data.user.email
-        } catch (error) {
-            console.log(error.response)
-        }
+        await this.loadProfile()
     },
 
     methods: {
+        async loadProfile() {
+            try {
+                const { data } = await axios.get('/api/profile', {
+                    withCredentials: true
+                })
+
+                this.user = data.user || null
+                this.form.email = data.user?.email || ''
+            } catch (error) {
+                console.error(
+                    'Neizdevās ielādēt profilu:',
+                    error.response?.data || error.message
+                )
+
+                this.showToast('FAILED TO LOAD PROFILE')
+            }
+        },
+
         async saveChanges() {
+            if (this.saving) return
+
             this.errors = {}
             this.saving = true
 
             try {
-                if (this.form.email && this.form.email !== this.user?.email) {
-                    const { data } = await axios.put('/api/profile/email', {
-                        email: this.form.email
-                    }, {
-                        withCredentials: true
-                    })
-                    this.user = data.user
+                // Atjaunojam e-pastu tikai tad, ja tas ir mainīts.
+                if (
+                    this.form.email !== this.user?.email
+                    && this.form.email
+                ) {
+                    const { data } = await axios.put(
+                        '/api/profile/email',
+                        {
+                            email: this.form.email
+                        },
+                        {
+                            withCredentials: true
+                        }
+                    )
+
+                    if (data.user) {
+                        this.user = data.user
+                    } else if (this.user) {
+                        this.user.email = this.form.email
+                    }
                 }
 
+                // Paroli mainām tikai tad, ja ievadīta jauna parole.
                 if (this.form.password) {
-                    await axios.put('/api/profile/password', {
-                        current_password: this.form.current_password,
-                        password: this.form.password,
-                        password_confirmation: this.form.password
-                    }, {
-                        withCredentials: true
-                    })
+                    await axios.put(
+                        '/api/profile/password',
+                        {
+                            current_password:
+                                this.form.current_password,
+                            password: this.form.password,
+                            password_confirmation:
+                                this.form.password
+                        },
+                        {
+                            withCredentials: true
+                        }
+                    )
+
                     this.form.password = ''
                     this.form.current_password = ''
                 }
 
                 this.showToast('CHANGES SAVED')
             } catch (error) {
-                console.log(error.response)
-                this.errors = error.response?.data?.errors || {}
+                console.error(
+                    'Neizdevās saglabāt izmaiņas:',
+                    error.response?.data || error.message
+                )
+
+                this.errors =
+                    error.response?.data?.errors || {}
+
+                if (error.response?.status === 401) {
+                    this.showToast('PLEASE LOG IN AGAIN')
+                } else if (Object.keys(this.errors).length === 0) {
+                    this.showToast('FAILED TO SAVE CHANGES')
+                }
             } finally {
                 this.saving = false
             }
         },
 
         async deleteAccount() {
-            if (!confirm('Delete your account? This cannot be undone.')) return
+            const confirmed = window.confirm(
+                'Delete your account? This cannot be undone.'
+            )
+
+            if (!confirmed) return
 
             try {
-                await axios.delete('/api/profile', { withCredentials: true })
+                await axios.delete('/api/profile', {
+                    withCredentials: true
+                })
+
                 auth.user = null
-                this.$router.push('/')
+
+                await this.$router.push('/')
             } catch (error) {
-                console.log(error.response)
+                console.error(
+                    'Neizdevās dzēst kontu:',
+                    error.response?.data || error.message
+                )
+
+                this.showToast('FAILED TO DELETE ACCOUNT')
             }
         },
 
         showToast(message) {
             this.toast = message
-            setTimeout(() => (this.toast = ''), 2500)
+
+            if (this.toastTimer) {
+                clearTimeout(this.toastTimer)
+            }
+
+            this.toastTimer = setTimeout(() => {
+                this.toast = ''
+                this.toastTimer = null
+            }, 2500)
+        }
+    },
+
+    beforeUnmount() {
+        if (this.toastTimer) {
+            clearTimeout(this.toastTimer)
         }
     }
 }
