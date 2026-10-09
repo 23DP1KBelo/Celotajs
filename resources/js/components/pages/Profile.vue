@@ -43,47 +43,60 @@
 
         <section class="mine">
             <div class="mine__head">
-                <h2>MY DESTINATIONS</h2>
+                <h2>MY TRIPS</h2>
 
-                <div class="tabs" role="tablist">
-                    <button
-                        v-for="tab in tabs"
-                        :key="tab.value"
-                        type="button"
-                        role="tab"
-                        class="tabs__item"
-                        :class="{ 'tabs__item--on': filter === tab.value }"
-                        :aria-selected="filter === tab.value"
-                        @click="filter = tab.value"
-                    >
-                        {{ tab.label }}
-                    </button>
+                <div class="mine__tools">
+                    <div class="tabs" role="tablist">
+                        <button
+                            v-for="tab in tabs"
+                            :key="tab.value"
+                            type="button"
+                            role="tab"
+                            class="tabs__item"
+                            :class="{ 'tabs__item--on': filter === tab.value }"
+                            :aria-selected="filter === tab.value"
+                            @click="filter = tab.value"
+                        >
+                            {{ tab.label }}
+                        </button>
+                    </div>
+
+                    <button type="button" class="mine__add" @click="openModal">+ ADD TRIP</button>
                 </div>
             </div>
 
-            <ul class="grid">
-                <li v-for="place in filtered" :key="place.id">
-                    <router-link
-                        :to="`/destination/${place.id}`"
-                        class="card"
-                        :style="{ backgroundImage: `url('${place.image}')` }"
-                    >
-                        <span class="card__badge" :class="{ 'card__badge--dark': place.status === 'visited' }">
-                            {{ place.status === 'visited' ? 'VISITED' : 'WANT TO VISIT' }}
-                        </span>
-                        <span class="card__name">{{ place.name }}</span>
-                    </router-link>
-                </li>
+            <p v-if="loadingTrips" class="mine__empty">LOADING…</p>
+            <p v-else-if="!trips.length" class="mine__empty">
+                YOU HAVE NO TRIPS YET. CLICK “ADD TRIP” TO CREATE YOUR FIRST ONE.
+            </p>
 
-                <li>
-                    <router-link to="/discover" class="card card--add">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" aria-hidden="true">
-                            <path d="M12 4v16M4 12h16" />
-                        </svg>
-                        ADD DESTINATION
-                    </router-link>
-                </li>
-            </ul>
+            <article v-for="trip in trips" :key="trip.id" class="trip">
+                <header class="trip__head">
+                    <h3>{{ trip.name }}</h3>
+                    <span>{{ (trip.destinations || []).length }} PLACES</span>
+                </header>
+                <p v-if="trip.description" class="trip__desc">{{ trip.description }}</p>
+
+                <ul v-if="visibleDestinations(trip).length" class="grid">
+                    <li v-for="place in visibleDestinations(trip)" :key="place.id">
+                        <router-link
+                            :to="`/destination/${place.id}`"
+                            class="card"
+                            :style="{ backgroundImage: `url('${place.image}')` }"
+                        >
+                            <span class="card__badge" :class="{ 'card__badge--dark': place.status === 'visited' }">
+                                {{ place.status === 'visited' ? 'VISITED' : 'WANT TO VISIT' }}
+                            </span>
+                            <span class="card__name">{{ place.name }}</span>
+                        </router-link>
+                    </li>
+                </ul>
+
+                <p v-else class="trip__empty">
+                    NO PLACES HERE YET.
+                    <router-link to="/discover">BROWSE DESTINATIONS</router-link>
+                </p>
+            </article>
         </section>
 
         <section class="account">
@@ -124,54 +137,60 @@
                 </div>
             </form>
         </section>
+
+        <transition name="fade">
+            <div v-if="modal" class="modal" @click.self="closeModal" @keydown.esc="closeModal">
+                <form
+                    class="modal__box"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="trip-title"
+                    @submit.prevent="createTrip"
+                >
+                    <h2 id="trip-title">NEW TRIP</h2>
+
+                    <label class="field">
+                        <span>NAME</span>
+                        <input
+                            ref="tripName"
+                            v-model.trim="tripForm.name"
+                            type="text"
+                            maxlength="100"
+                            placeholder="E.G. SUMMER IN NORWAY"
+                        >
+                        <small v-if="tripErrors.name">{{ tripErrors.name[0] }}</small>
+                    </label>
+
+                    <label class="field">
+                        <span>DESCRIPTION</span>
+                        <textarea
+                            v-model.trim="tripForm.description"
+                            rows="4"
+                            placeholder="WHAT IS THIS TRIP ABOUT?"
+                        />
+                        <small v-if="tripErrors.description">{{ tripErrors.description[0] }}</small>
+                    </label>
+
+                    <div class="account__actions">
+                        <button type="submit" class="account__save" :disabled="creating">
+                            {{ creating ? 'SAVING...' : 'CREATE TRIP' }}
+                        </button>
+                        <button type="button" class="account__delete" @click="closeModal">CANCEL</button>
+                    </div>
+                </form>
+            </div>
+        </transition>
     </main>
 </template>
+
 <script>
 import axios from 'axios'
-import { auth, fetchUser } from '../../auth.js'
+import { auth } from '../../auth.js'
 
 export default {
     data() {
-        const destinations = [
-            {
-                id: 1,
-                name: 'Paris',
-                country: 'France',
-                status: 'visited',
-                image: '/image/destinations/paris.jpg'
-            },
-            {
-                id: 2,
-                name: 'Tokyo',
-                country: 'Japan',
-                status: 'not_visited',
-                image: '/image/destinations/tokyo.jpg'
-            },
-            {
-                id: 3,
-                name: 'New York',
-                country: 'USA',
-                status: 'visited',
-                image: '/image/destinations/new-york.jpg'
-            },
-            {
-                id: 4,
-                name: 'Sydney',
-                country: 'Australia',
-                status: 'not_visited',
-                image: '/image/destinations/sydney.jpg'
-            },
-            {
-                id: 5,
-                name: 'Rio de Janeiro',
-                country: 'Brazil',
-                status: 'not_visited',
-                image: '/image/destinations/rio.jpg'
-            }
-        ]
-
         return {
-            user: auth.user,
+            user: null,
 
             filter: 'all',
 
@@ -181,13 +200,14 @@ export default {
                 { value: 'visited', label: 'VISITED' }
             ],
 
-            destinations,
+            // Trips + destinations inside them come from GET /api/user/trips
+            trips: [],
+            loadingTrips: true,
 
-            // Pagaidām izmantojam statiskus datus.
-            // Vēlāk tos varēs ielādēt no API.
-            saved: destinations.filter(place =>
-                [1, 2, 3].includes(place.id)
-            ),
+            modal: false,
+            creating: false,
+            tripForm: { name: '', description: '' },
+            tripErrors: {},
 
             form: {
                 email: '',
@@ -197,7 +217,8 @@ export default {
 
             errors: {},
             saving: false,
-            toast: ''
+            toast: '',
+            toastTimer: null
         }
     },
 
@@ -218,6 +239,17 @@ export default {
                 : date.getFullYear()
         },
 
+        // all places from all trips, without duplicates
+        saved() {
+            const unique = new Map()
+
+            this.trips.forEach((trip) => {
+                (trip.destinations || []).forEach((place) => unique.set(place.id, place))
+            })
+
+            return [...unique.values()]
+        },
+
         visitedCount() {
             return this.saved.filter(
                 place => place.status === 'visited'
@@ -228,38 +260,110 @@ export default {
             return new Set(
                 this.saved.map(place => place.country)
             ).size
-        },
-
-        filtered() {
-            if (this.filter === 'all') {
-                return this.saved
-            }
-
-            return this.saved.filter(
-                place => place.status === this.filter
-            )
         }
     },
 
-    authConfig() {
-        const token = localStorage.getItem('token')
-
-        return {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        }
+    async mounted() {
+        await Promise.all([this.loadProfile(), this.loadTrips()])
     },
 
     methods: {
-        async mounted() {
-            await fetchUser()
-            this.user = auth.user
+        async loadProfile() {
+            try {
+                const { data } = await axios.get('/api/profile', {
+                    withCredentials: true
+                })
 
-            if (this.user) {
-                this.form.email = this.user.email || ''
-            } else {
-                this.$router.push('/login')
+                this.user = data.user || null
+                this.form.email = data.user?.email || ''
+            } catch (error) {
+                console.error(
+                    'Neizdevās ielādēt profilu:',
+                    error.response?.data || error.message
+                )
+
+                this.showToast('FAILED TO LOAD PROFILE')
+            }
+        },
+
+        async loadTrips() {
+            this.loadingTrips = true
+
+            try {
+                const { data } = await axios.get('/api/user/trips', {
+                    withCredentials: true
+                })
+
+                this.trips = Array.isArray(data) ? data : (data.trips || [])
+            } catch (error) {
+                console.error(
+                    'Neizdevās ielādēt trips:',
+                    error.response?.data || error.message
+                )
+
+                this.showToast('FAILED TO LOAD TRIPS')
+            } finally {
+                this.loadingTrips = false
+            }
+        },
+
+        visibleDestinations(trip) {
+            const places = trip.destinations || []
+
+            return this.filter === 'all'
+                ? places
+                : places.filter(place => place.status === this.filter)
+        },
+
+        openModal() {
+            this.tripForm = { name: '', description: '' }
+            this.tripErrors = {}
+            this.modal = true
+            this.$nextTick(() => this.$refs.tripName?.focus())
+        },
+
+        closeModal() {
+            this.modal = false
+        },
+
+        async createTrip() {
+            if (this.creating) return
+
+            this.tripErrors = {}
+
+            if (!this.tripForm.name) {
+                this.tripErrors = { name: ['This field is required.'] }
+                return
+            }
+
+            this.creating = true
+
+            try {
+                await axios.post('/api/user/trips', {
+                    name: this.tripForm.name,
+                    description: this.tripForm.description
+                }, {
+                    withCredentials: true
+                })
+
+                this.closeModal()
+                await this.loadTrips()
+                this.showToast('TRIP CREATED')
+            } catch (error) {
+                console.error(
+                    'Neizdevās izveidot trip:',
+                    error.response?.data || error.message
+                )
+
+                this.tripErrors = error.response?.data?.errors || {}
+
+                if (error.response?.status === 401) {
+                    this.showToast('PLEASE LOG IN AGAIN')
+                } else if (Object.keys(this.tripErrors).length === 0) {
+                    this.showToast('FAILED TO CREATE TRIP')
+                }
+            } finally {
+                this.creating = false
             }
         },
 
@@ -396,7 +500,8 @@ export default {
 }
 
 .profile h1,
-.profile h2 {
+.profile h2,
+.profile h3 {
     margin: 0;
     font-family: var(--serif);
     font-weight: 400;
@@ -409,7 +514,8 @@ export default {
 
 .profile a:focus-visible,
 .profile button:focus-visible,
-.profile input:focus-visible {
+.profile input:focus-visible,
+.profile textarea:focus-visible {
     outline: 2px solid var(--link);
     outline-offset: 3px;
 }
@@ -514,7 +620,7 @@ export default {
     color: var(--muted);
 }
 
-/* ---------- My destinations ---------- */
+/* ---------- My trips ---------- */
 .mine {
     padding: 3.5rem 1rem 0;
 }
@@ -530,6 +636,45 @@ export default {
 
 .mine__head h2 {
     font-size: 1.65rem;
+}
+
+.mine__tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem 2rem;
+}
+
+.mine__add {
+    padding: 0.8rem 1.8rem;
+    border: 0;
+    border-radius: 999px;
+    background: #000;
+    color: #fff;
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.mine__add:hover {
+    background: #222;
+}
+
+.mine__empty,
+.trip__empty {
+    margin: 1.5rem 0;
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+.trip__empty a {
+    margin-left: 0.5rem;
+    color: var(--link);
+    text-decoration: underline;
+    text-underline-offset: 3px;
 }
 
 .tabs {
@@ -555,11 +700,43 @@ export default {
     color: #000;
 }
 
+.trip {
+    margin-bottom: 3.5rem;
+}
+
+.trip__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid #bdbdbd;
+}
+
+.trip__head h3 {
+    font-size: 1.6rem;
+    letter-spacing: 0.03em;
+}
+
+.trip__head span {
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+}
+
+.trip__desc {
+    max-width: 40rem;
+    margin: 1rem 0 1.5rem;
+    font-size: 0.85rem;
+    line-height: 1.45;
+    text-transform: uppercase;
+}
+
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
     gap: 1rem;
-    margin: 0;
+    margin: 1.5rem 0 0;
     padding: 0;
     list-style: none;
 }
@@ -580,7 +757,7 @@ export default {
     transform: translateY(-4px);
 }
 
-.card:not(.card--add)::before {
+.card::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -613,18 +790,6 @@ export default {
 .card__badge--dark {
     background: #000;
     color: #fff;
-}
-
-.card--add {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.6rem;
-    border: 1px solid #000;
-    background: #fff;
-    color: #000;
-    font-family: var(--serif);
-    font-size: 0.95rem;
 }
 
 /* ---------- Account details ---------- */
@@ -673,7 +838,8 @@ export default {
     color: var(--muted);
 }
 
-.field input {
+.field input,
+.field textarea {
     padding: 0.75rem 0;
     border: 0;
     border-bottom: 1px solid #767676;
@@ -685,11 +851,17 @@ export default {
     outline: none;
 }
 
-.field input::placeholder {
+.field textarea {
+    resize: vertical;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
     color: #767676;
 }
 
-.field input:focus {
+.field input:focus,
+.field textarea:focus {
     border-bottom-color: #000;
     box-shadow: 0 1px 0 #000;
 }
@@ -747,13 +919,51 @@ export default {
     cursor: pointer;
 }
 
+/* ---------- Modal ---------- */
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.modal__box {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    width: 100%;
+    max-width: 30rem;
+    padding: 2.5rem 2.2rem;
+    border-radius: 1.2rem;
+    background: #fff;
+}
+
+.modal__box h2 {
+    font-size: 2rem;
+    letter-spacing: 0.04em;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.25s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
 /* ---------- Toast ---------- */
 .toast {
     position: fixed;
     top: 1.5rem;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 10;
+    z-index: 30;
     padding: 1rem 1.8rem;
     border-radius: 999px;
     background: #000;
@@ -805,6 +1015,10 @@ export default {
 
     .account {
         padding-top: 3.5rem;
+    }
+
+    .modal__box {
+        padding: 2rem 1.5rem;
     }
 }
 </style>
