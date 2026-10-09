@@ -72,4 +72,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // places by country
     Route::get('/countries/{countryId}/places', [PlaceController::class, 'getPlacesByCountry']);
 
+    // all destinations
+    Route::get('/destinations', [DestinationController::class, 'index']);
+
+    // one destination
+    Route::get('/destinations/{id}', [DestinationController::class, 'show']);
+
+    // update destination
+    Route::put('/destinations/{id}', [DestinationController::class, 'update']);
+
 });
