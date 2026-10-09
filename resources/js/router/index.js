@@ -2,6 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../components/pages/Home.vue'
 import Discover from '../components/pages/Discover.vue'
 import Destination from '../components/pages/Destination.vue' 
+import AddDestination from '../components/pages/AddDestination.vue'
+
 import Login from '../components/pages/Login.vue'
 import Register from '../components/pages/Register.vue'
 
@@ -10,6 +12,7 @@ const routes = [
     { path: '/', component: Home},
     { path: '/discover', component: Discover },
     { path: '/destination/:id', component: Destination },
+    { path: '/add-destination', component: AddDestination },
     { path: '/login', component: Login, meta: { hideHeader: true } },
     { path: '/register', component: Register, meta: { hideHeader: true }},
 ]
