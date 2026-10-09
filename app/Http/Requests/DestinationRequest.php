@@ -32,10 +32,10 @@ class DestinationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'title.required' => 'Title is required.',
-            'title.max' => 'Title cannot exceed 255 characters.',
-            'places_id.required' => 'Place ID is required.',
-            'places_id.exists' => 'Place ID must exist in the places table.',
+            'title.required' => 'Nosaukums ir obligāts.',
+            'title.max' => 'Nosaukums nedrīkst pārsniegt 255 rakstzīmes.',
+            'places_id.required' => 'Vietas ID ir obligāts.',
+            'places_id.exists' => 'Norādītajam vietas ID ir jābūt reģistrētam vietu tabulā.',
         ];
     }
 }

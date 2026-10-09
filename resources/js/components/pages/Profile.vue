@@ -76,6 +76,7 @@
                         >
                             {{ place.status === 'visited' ? 'VISITED' : 'WANT TO VISIT' }}
                         </span>
+
                         <span class="card__name">{{ place.name }}</span>
                     </router-link>
                 </li>
@@ -100,7 +101,12 @@
             <form class="account__form" @submit.prevent="saveChanges">
                 <label class="field">
                     <span>FULL NAME</span>
-                    <input :value="username" type="text" placeholder="YOUR NAME" readonly>
+                    <input
+                        :value="username"
+                        type="text"
+                        placeholder="YOUR NAME"
+                        readonly
+                    >
                 </label>
 
                 <label class="field">
@@ -110,9 +116,10 @@
                         type="email"
                         placeholder="YOU@EXAMPLE.COM"
                         autocomplete="email"
-                        required
                     >
-                    <small v-if="errors.email">{{ errors.email[0] }}</small>
+                    <small v-if="errors.email">
+                        {{ errors.email[0] }}
+                    </small>
                 </label>
 
                 <label class="field">
@@ -120,10 +127,12 @@
                     <input
                         v-model="form.password"
                         type="password"
-                        placeholder="**********"
+                        placeholder="Leave empty to keep current password"
                         autocomplete="new-password"
                     >
-                    <small v-if="errors.password">{{ errors.password[0] }}</small>
+                    <small v-if="errors.password">
+                        {{ errors.password[0] }}
+                    </small>
                 </label>
 
                 <label v-if="form.password" class="field">
@@ -131,18 +140,29 @@
                     <input
                         v-model="form.current_password"
                         type="password"
+                        placeholder="CURRENT PASSWORD"
                         autocomplete="current-password"
-                        required
                     >
-                    <small v-if="errors.current_password">{{ errors.current_password[0] }}</small>
+                    <small v-if="errors.current_password">
+                        {{ errors.current_password[0] }}
+                    </small>
                 </label>
 
                 <div class="account__actions">
-                    <button type="submit" class="account__save" :disabled="saving">
+                    <button
+                        type="submit"
+                        class="account__save"
+                        :disabled="saving"
+                    >
                         {{ saving ? 'SAVING...' : 'SAVE CHANGES' }}
                     </button>
 
-                    <button type="button" class="account__delete" :disabled="saving" @click="deleteAccount">
+                    <button
+                        type="button"
+                        class="account__delete"
+                        :disabled="saving"
+                        @click="deleteAccount"
+                    >
                         DELETE ACCOUNT
                     </button>
                 </div>
@@ -207,6 +227,7 @@ export default {
 
             destinations,
 
+            // Pagaidām statiski galamērķi.
             saved: destinations.filter(place =>
                 [1, 2, 3].includes(place.id)
             ),
@@ -226,7 +247,9 @@ export default {
 
     computed: {
         username() {
-            return this.user?.username || this.user?.Username || ''
+            return this.user?.username
+                || this.user?.Username
+                || ''
         },
 
         memberSince() {
@@ -234,15 +257,21 @@ export default {
 
             const date = new Date(this.user.created_at)
 
-            return Number.isNaN(date.getTime()) ? '' : date.getFullYear()
+            return Number.isNaN(date.getTime())
+                ? ''
+                : date.getFullYear()
         },
 
         visitedCount() {
-            return this.saved.filter(place => place.status === 'visited').length
+            return this.saved.filter(
+                place => place.status === 'visited'
+            ).length
         },
 
         countriesCount() {
-            return new Set(this.saved.map(place => place.country)).size
+            return new Set(
+                this.saved.map(place => place.country)
+            ).size
         },
 
         filtered() {
@@ -250,7 +279,9 @@ export default {
                 return this.saved
             }
 
-            return this.saved.filter(place => place.status === this.filter)
+            return this.saved.filter(
+                place => place.status === this.filter
+            )
         }
     },
 
@@ -291,24 +322,36 @@ export default {
 
             try {
                 const config = this.getAuthConfig()
-                const email = this.form.email.trim()
-                const emailChanged = email !== (this.user?.email || '')
-                const passwordChanged = Boolean(this.form.password)
 
-                if (!email && !passwordChanged) {
-                    this.errors = {
-                        email: ['Email is required.']
-                    }
+                const email = this.form.email.trim()
+                const originalEmail = this.user?.email || ''
+
+                const emailChanged = email !== originalEmail
+                const passwordChanged = this.form.password.length > 0
+
+                // Ja nekas nav mainīts, nesūtām pieprasījumu.
+                if (!emailChanged && !passwordChanged) {
+                    this.showToast('NO CHANGES TO SAVE')
                     return
                 }
 
+                // Pārbaudām e-pastu tikai tad, ja tas tiek mainīts.
                 if (emailChanged) {
+                    if (!email) {
+                        this.errors = {
+                            email: ['Email is required.']
+                        }
+                        return
+                    }
+
+                    // E-pasta maiņas pieprasījums.
                     await axios.put(
                         '/api/profile/email',
                         { email },
                         config
                     )
 
+                    // Atjaunojam lietotāja datus.
                     await fetchUser()
                     this.user = auth.user
 
@@ -319,6 +362,7 @@ export default {
                     this.form.email = this.user.email || ''
                 }
 
+                // Paroli mainām tikai tad, ja ievadīta jauna parole.
                 if (passwordChanged) {
                     if (!this.form.current_password) {
                         this.errors = {
@@ -460,6 +504,7 @@ export default {
     outline-offset: 3px;
 }
 
+/* Hero */
 .profile__hero {
     position: relative;
     height: 21rem;
@@ -491,6 +536,7 @@ export default {
     letter-spacing: 0.02em;
 }
 
+/* User */
 .user {
     display: flex;
     flex-wrap: wrap;
@@ -558,6 +604,7 @@ export default {
     color: var(--muted);
 }
 
+/* Destinations */
 .mine {
     padding: 3.5rem 1rem 0;
 }
@@ -670,6 +717,7 @@ export default {
     font-size: 0.95rem;
 }
 
+/* Account */
 .account {
     display: flex;
     flex-wrap: wrap;
@@ -790,6 +838,7 @@ export default {
     cursor: pointer;
 }
 
+/* Toast */
 .toast {
     position: fixed;
     top: 1.5rem;
@@ -816,6 +865,7 @@ export default {
     transform: translate(-50%, -1rem);
 }
 
+/* Mobile */
 @media (max-width: 700px) {
     .profile__hero {
         height: 16rem;

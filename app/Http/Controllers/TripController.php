@@ -7,18 +7,27 @@ use App\Http\Requests\TripRequest;
 use App\Models\Trip;
 use App\Models\TripDestination;
 use App\Http\Resources\TripResource;
+use Illuminate\Support\Facades\Storage;
 
 class TripController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display all trips.
      */
     public function index()
     {
-        $trips = Trip::with(['destinations', 'destinations.place', 'destinations.place.country'])->get();
+        $trips = Trip::with([
+            'destinations',
+            'destinations.place',
+            'destinations.place.country',
+        ])->get();
+
         return response()->json($trips);
     }
 
+    /**
+     * Filter recommended destinations.
+     */
     public function filterRecommendations(Request $request)
     {
         $request->validate([
@@ -43,7 +52,11 @@ class TripController extends Controller
                         $placeQuery
                             ->where('name', 'LIKE', "%{$search}%")
                             ->orWhereHas('country', function ($countryQuery) use ($search) {
-                                $countryQuery->where('name', 'LIKE', "%{$search}%");
+                                $countryQuery->where(
+                                    'name',
+                                    'LIKE',
+                                    "%{$search}%"
+                                );
                             });
                     });
             });
@@ -72,7 +85,9 @@ class TripController extends Controller
         return response()->json($query->get());
     }
 
-    // Get all trips for the authenticated user with their destinations
+    /**
+     * Get authenticated user's trips and destinations.
+     */
     public function getUserTripsWithDestinations(Request $request)
     {
         $trips = Trip::with([
@@ -86,18 +101,42 @@ class TripController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a new trip with an optional image.
      */
-    public function store(TripRequest $request)
+    public function store(Request $request)
     {
-        $validated = $request->validated();
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'date_from' => 'nullable|date',
+            'date_till' => 'nullable|date|after_or_equal:date_from',
+            'budget' => 'nullable|numeric|min:0',
+            'status' => 'nullable|in:unvisited,visited',
+            'category' => 'nullable|in:rest,nature,adventure',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
+        ]);
+
+        // Save the uploaded image.
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')
+                ->store('trips', 'public');
+
+            $validated['image'] = asset('storage/' . $path);
+        }
+
+        // Assign the trip to the authenticated user.
+        $validated['user_id'] = $request->user()->id;
 
         $trip = Trip::create($validated);
-        return response()->json($trip, 201);
+
+        return response()->json([
+            'message' => 'Trip created successfully.',
+            'trip' => $trip,
+        ], 201);
     }
 
     /**
-     * Display the specified resource.
+     * Display one trip.
      */
     public function show(string $id)
     {
@@ -107,30 +146,85 @@ class TripController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update a trip and optionally replace its image.
      */
     public function update(TripRequest $request, string $id)
     {
         $trip = Trip::findOrFail($id);
 
-        $trip->update($request->validated());
+        // Only the trip owner may update it.
+        abort_unless(
+            $trip->user_id === $request->user()->id,
+            403,
+            'You are not allowed to update this trip.'
+        );
 
-        return new TripResource($trip);
+        $validated = $request->validated();
+
+        if ($request->hasFile('image')) {
+            // Delete the previous image if it belongs to our storage.
+            $this->deleteTripImage($trip->image);
+
+            // Store the new image.
+            $path = $request->file('image')
+                ->store('trips', 'public');
+
+           $validated['image'] = asset('storage/' . $path);
+        }
+
+        $trip->update($validated);
+
+        return new TripResource($trip->fresh());
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Delete a trip, its image, and related destinations.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
         $trip = Trip::findOrFail($id);
 
+        // Only the trip owner may delete it.
+        abort_unless(
+            $trip->user_id === $request->user()->id,
+            403,
+            'You are not allowed to delete this trip.'
+        );
+
+        // Delete the image file from storage.
+        $this->deleteTripImage($trip->image);
+
+        // Delete related destinations.
         TripDestination::where('trip_id', $trip->id)->delete();
 
+        // Delete the trip itself.
         $trip->delete();
 
         return response()->json([
-            'message' => 'Trip and related destinations deleted successfully.'
+            'message' => 'Trip and related destinations deleted successfully.',
         ], 200);
+    }
+
+    /**
+     * Delete a trip image only if it is in our public trips directory.
+     */
+    private function deleteTripImage(?string $imageUrl): void
+    {
+        if (!$imageUrl) {
+            return;
+        }
+
+        $imagePath = parse_url($imageUrl, PHP_URL_PATH);
+
+        if (
+            !$imagePath ||
+            !str_starts_with($imagePath, '/storage/trips/')
+        ) {
+            return;
+        }
+
+        $relativePath = substr($imagePath, strlen('/storage/'));
+
+        Storage::disk('public')->delete($relativePath);
     }
 }

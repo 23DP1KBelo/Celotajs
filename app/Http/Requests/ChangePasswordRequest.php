@@ -32,13 +32,13 @@ class ChangePasswordRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'current_password.required' => 'Current password is required.',
-            'current_password.current_password' => 'Current password is incorrect.',
+            'current_password.required' => 'Pašreizējā parole ir obligāta.',
+            'current_password.current_password' => 'Pašreizējā parole nav pareiza.',
 
-            'password.required' => 'New password is required.',
-            'password.min' => 'New password must be at least 8 characters long.',
-            'password.max' => 'New password must not exceed 255 characters.',
-            'password.confirmed' => 'Password confirmation does not match.',
+            'password.required' => 'Jaunā parole ir obligāta.',
+            'password.min' => 'Jaunajai parolei jābūt vismaz 8 rakstzīmes garai.',
+            'password.max' => 'Jaunā parole nedrīkst pārsniegt 255 rakstzīmes.',
+            'password.confirmed' => 'Paroles apstiprinājums nesakrīt ar jauno paroli.',
         ];
     }
 }

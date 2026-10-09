@@ -31,10 +31,10 @@ class CountryRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'Name is required.',
-            'name.max' => 'Name cannot exceed 255 characters.',
-            'country_code.required' => 'Country code is required.',
-            'country_code.max' => 'Country code cannot exceed 2 characters.'
+            'name.required' => 'Nosaukums ir obligāts.',
+            'name.max' => 'Nosaukums nedrīkst pārsniegt 255 rakstzīmes.',
+            'country_code.required' => 'Valsts kods ir obligāts.',
+            'country_code.max' => 'Valsts kods nedrīkst pārsniegt 2 rakstzīmes.',
         ];
     }
 }

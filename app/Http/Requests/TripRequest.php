@@ -38,23 +38,30 @@ class TripRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'title.required' => 'Title is required.',
-            'title.max' => 'Title cannot exceed 255 characters.',
-            'user_id.required' => 'User ID is required.',
-            'user_id.exists' => 'User ID must exist in the users table.',
-            'date_from.required' => 'Start date is required.',
-            'date_from.date' => 'Start date must be a valid date.',
-            'date_till.required' => 'End date is required.',
-            'date_till.date' => 'End date must be a valid date.',
-            'date_till.after' => 'End date must be after the start date.',
-            'budget.numeric' => 'Budget must be a number.',
-            'budget.min' => 'Budget cannot be negative.',
-            'status.required' => 'Status is required.',
-            'status.in' => 'Status must be either unvisited or visited.',
-            'category.in' => 'Category must be one of: rest, nature, adventure.',
-            'image.file' => 'Image must be a valid file.',
-            'image.mimes' => 'Image must be a file of type: jpg, jpeg, png.',
-            'image.max' => 'Image cannot exceed 2048 kilobytes.'
+            'title.required' => 'Ceļojuma nosaukums ir obligāts.',
+            'title.max' => 'Ceļojuma nosaukums nedrīkst pārsniegt 255 rakstzīmes.',
+
+            'user_id.required' => 'Lietotāja ID ir obligāts.',
+            'user_id.exists' => 'Norādītajam lietotāja ID ir jābūt reģistrētam lietotāju tabulā.',
+
+            'date_from.required' => 'Ceļojuma sākuma datums ir obligāts.',
+            'date_from.date' => 'Ceļojuma sākuma datumam jābūt derīgam datumam.',
+
+            'date_till.required' => 'Ceļojuma beigu datums ir obligāts.',
+            'date_till.date' => 'Ceļojuma beigu datumam jābūt derīgam datumam.',
+            'date_till.after' => 'Ceļojuma beigu datumam jābūt vēlākam par sākuma datumu.',
+
+            'budget.numeric' => 'Budžetam jābūt skaitlim.',
+            'budget.min' => 'Budžets nedrīkst būt negatīvs.',
+
+            'status.required' => 'Statuss ir obligāts.',
+            'status.in' => 'Statusam jābūt vienai no šīm vērtībām: neapmeklēts vai apmeklēts.',
+
+            'category.in' => 'Kategorijai jābūt vienai no šīm vērtībām: atpūta, daba vai piedzīvojumi.',
+
+            'image.file' => 'Attēlam jābūt derīgam failam.',
+            'image.mimes' => 'Attēlam jābūt JPG, JPEG vai PNG formātā.',
+            'image.max' => 'Attēla izmērs nedrīkst pārsniegt 2048 kilobaitus.',
         ];
     }
 }
