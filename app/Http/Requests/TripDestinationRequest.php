@@ -34,12 +34,12 @@ class TripDestinations extends FormRequest
     public function messages(): array
     {
         return [
-            'recommendations.required' => 'Recommendations is required.',
-            'recommendations.boolean' => 'Recommendations must be a boolean value.',
-            'trip_id.required' => 'Trip ID is required.',
-            'trip_id.exists' => 'Trip ID must exist in the trips table.',
-            'destination_id.required' => 'Destination ID is required.',
-            'destination_id.exists' => 'Destination ID must exist in the destinations table.',
+            'recommendations.required' => 'Ieteikumu lauks ir obligāts.',
+            'recommendations.boolean' => 'Ieteikumu laukam jābūt loģiskai vērtībai (true vai false).',
+            'trip_id.required' => 'Ceļojuma ID ir obligāts.',
+            'trip_id.exists' => 'Norādītajam ceļojuma ID ir jābūt reģistrētam ceļojumu tabulā.',
+            'destination_id.required' => 'Galamērķa ID ir obligāts.',
+            'destination_id.exists' => 'Norādītajam galamērķa ID ir jābūt reģistrētam galamērķu tabulā.',
         ];
     }
 }

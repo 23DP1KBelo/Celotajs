@@ -1,7 +1,9 @@
 <template>
     <main class="profile">
         <transition name="toast">
-            <div v-if="toast" class="toast" role="status">{{ toast }}</div>
+            <div v-if="toast" class="toast" role="status">
+                {{ toast }}
+            </div>
         </transition>
 
         <header class="profile__hero">
@@ -68,9 +70,13 @@
                         class="card"
                         :style="{ backgroundImage: `url('${place.image}')` }"
                     >
-                        <span class="card__badge" :class="{ 'card__badge--dark': place.status === 'visited' }">
+                        <span
+                            class="card__badge"
+                            :class="{ 'card__badge--dark': place.status === 'visited' }"
+                        >
                             {{ place.status === 'visited' ? 'VISITED' : 'WANT TO VISIT' }}
                         </span>
+
                         <span class="card__name">{{ place.name }}</span>
                     </router-link>
                 </li>
@@ -95,40 +101,79 @@
             <form class="account__form" @submit.prevent="saveChanges">
                 <label class="field">
                     <span>FULL NAME</span>
-                    <input :value="username" type="text" placeholder="YOUR NAME" readonly>
+                    <input
+                        :value="username"
+                        type="text"
+                        placeholder="YOUR NAME"
+                        readonly
+                    >
                 </label>
 
                 <label class="field">
                     <span>EMAIL</span>
-                    <input v-model.trim="form.email" type="email" placeholder="YOU@EXAMPLE.COM" autocomplete="email">
-                    <small v-if="errors.email">{{ errors.email[0] }}</small>
+                    <input
+                        v-model.trim="form.email"
+                        type="email"
+                        placeholder="YOU@EXAMPLE.COM"
+                        autocomplete="email"
+                    >
+                    <small v-if="errors.email">
+                        {{ errors.email[0] }}
+                    </small>
                 </label>
 
                 <label class="field">
                     <span>NEW PASSWORD</span>
-                    <input v-model="form.password" type="password" placeholder="**********" autocomplete="new-password">
-                    <small v-if="errors.password">{{ errors.password[0] }}</small>
+                    <input
+                        v-model="form.password"
+                        type="password"
+                        placeholder="Leave empty to keep current password"
+                        autocomplete="new-password"
+                    >
+                    <small v-if="errors.password">
+                        {{ errors.password[0] }}
+                    </small>
                 </label>
 
                 <label v-if="form.password" class="field">
                     <span>CURRENT PASSWORD</span>
-                    <input v-model="form.current_password" type="password" autocomplete="current-password">
-                    <small v-if="errors.current_password">{{ errors.current_password[0] }}</small>
+                    <input
+                        v-model="form.current_password"
+                        type="password"
+                        placeholder="CURRENT PASSWORD"
+                        autocomplete="current-password"
+                    >
+                    <small v-if="errors.current_password">
+                        {{ errors.current_password[0] }}
+                    </small>
                 </label>
 
                 <div class="account__actions">
-                    <button type="submit" class="account__save" :disabled="saving">
+                    <button
+                        type="submit"
+                        class="account__save"
+                        :disabled="saving"
+                    >
                         {{ saving ? 'SAVING...' : 'SAVE CHANGES' }}
                     </button>
-                    <button type="button" class="account__delete" @click="deleteAccount">DELETE ACCOUNT</button>
+
+                    <button
+                        type="button"
+                        class="account__delete"
+                        :disabled="saving"
+                        @click="deleteAccount"
+                    >
+                        DELETE ACCOUNT
+                    </button>
                 </div>
             </form>
         </section>
     </main>
 </template>
+
 <script>
 import axios from 'axios'
-import { auth } from '../../auth.js'
+import { auth, fetchUser } from '../../auth.js'
 
 export default {
     data() {
@@ -171,8 +216,7 @@ export default {
         ]
 
         return {
-            user: null,
-
+            user: auth.user,
             filter: 'all',
 
             tabs: [
@@ -183,8 +227,7 @@ export default {
 
             destinations,
 
-            // Pagaidām izmantojam statiskus datus.
-            // Vēlāk tos varēs ielādēt no API.
+            // Pagaidām statiski galamērķi.
             saved: destinations.filter(place =>
                 [1, 2, 3].includes(place.id)
             ),
@@ -197,7 +240,8 @@ export default {
 
             errors: {},
             saving: false,
-            toast: ''
+            toast: '',
+            toastTimer: null
         }
     },
 
@@ -242,25 +286,31 @@ export default {
     },
 
     async mounted() {
-        await this.loadProfile()
+        await fetchUser()
+        this.user = auth.user
+
+        if (!this.user) {
+            await this.$router.push('/login')
+            return
+        }
+
+        this.form.email = this.user.email || ''
     },
 
     methods: {
-        async loadProfile() {
-            try {
-                const { data } = await axios.get('/api/profile', {
-                    withCredentials: true
-                })
+        getAuthConfig() {
+            const token = localStorage.getItem('token')
 
-                this.user = data.user || null
-                this.form.email = data.user?.email || ''
-            } catch (error) {
-                console.error(
-                    'Neizdevās ielādēt profilu:',
-                    error.response?.data || error.message
-                )
+            if (!token) {
+                throw new Error('AUTH_REQUIRED')
+            }
 
-                this.showToast('FAILED TO LOAD PROFILE')
+            return {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json'
+                }
             }
         },
 
@@ -271,42 +321,66 @@ export default {
             this.saving = true
 
             try {
-                // Atjaunojam e-pastu tikai tad, ja tas ir mainīts.
-                if (
-                    this.form.email !== this.user?.email
-                    && this.form.email
-                ) {
-                    const { data } = await axios.put(
-                        '/api/profile/email',
-                        {
-                            email: this.form.email
-                        },
-                        {
-                            withCredentials: true
+                const config = this.getAuthConfig()
+
+                const email = this.form.email.trim()
+                const originalEmail = this.user?.email || ''
+
+                const emailChanged = email !== originalEmail
+                const passwordChanged = this.form.password.length > 0
+
+                // Ja nekas nav mainīts, nesūtām pieprasījumu.
+                if (!emailChanged && !passwordChanged) {
+                    this.showToast('NO CHANGES TO SAVE')
+                    return
+                }
+
+                // Pārbaudām e-pastu tikai tad, ja tas tiek mainīts.
+                if (emailChanged) {
+                    if (!email) {
+                        this.errors = {
+                            email: ['Email is required.']
                         }
+                        return
+                    }
+
+                    // E-pasta maiņas pieprasījums.
+                    await axios.put(
+                        '/api/profile/email',
+                        { email },
+                        config
                     )
 
-                    if (data.user) {
-                        this.user = data.user
-                    } else if (this.user) {
-                        this.user.email = this.form.email
+                    // Atjaunojam lietotāja datus.
+                    await fetchUser()
+                    this.user = auth.user
+
+                    if (!this.user) {
+                        throw new Error('USER_REFRESH_FAILED')
                     }
+
+                    this.form.email = this.user.email || ''
                 }
 
                 // Paroli mainām tikai tad, ja ievadīta jauna parole.
-                if (this.form.password) {
+                if (passwordChanged) {
+                    if (!this.form.current_password) {
+                        this.errors = {
+                            current_password: [
+                                'Please enter your current password.'
+                            ]
+                        }
+                        return
+                    }
+
                     await axios.put(
                         '/api/profile/password',
                         {
-                            current_password:
-                                this.form.current_password,
+                            current_password: this.form.current_password,
                             password: this.form.password,
-                            password_confirmation:
-                                this.form.password
+                            password_confirmation: this.form.password
                         },
-                        {
-                            withCredentials: true
-                        }
+                        config
                     )
 
                     this.form.password = ''
@@ -320,14 +394,24 @@ export default {
                     error.response?.data || error.message
                 )
 
-                this.errors =
-                    error.response?.data?.errors || {}
+                if (error.message === 'AUTH_REQUIRED') {
+                    this.showToast('PLEASE LOG IN AGAIN')
+                    await this.$router.push('/login')
+                    return
+                }
 
                 if (error.response?.status === 401) {
                     this.showToast('PLEASE LOG IN AGAIN')
-                } else if (Object.keys(this.errors).length === 0) {
-                    this.showToast('FAILED TO SAVE CHANGES')
+                    return
                 }
+
+                if (error.response?.status === 422) {
+                    this.errors = error.response.data?.errors || {}
+                    this.showToast('PLEASE CHECK YOUR DETAILS')
+                    return
+                }
+
+                this.showToast('FAILED TO SAVE CHANGES')
             } finally {
                 this.saving = false
             }
@@ -341,11 +425,13 @@ export default {
             if (!confirmed) return
 
             try {
-                await axios.delete('/api/profile', {
-                    withCredentials: true
-                })
+                const config = this.getAuthConfig()
 
+                await axios.delete('/api/profile', config)
+
+                localStorage.removeItem('token')
                 auth.user = null
+                auth.loaded = true
 
                 await this.$router.push('/')
             } catch (error) {
@@ -354,7 +440,11 @@ export default {
                     error.response?.data || error.message
                 )
 
-                this.showToast('FAILED TO DELETE ACCOUNT')
+                if (error.response?.status === 401) {
+                    this.showToast('PLEASE LOG IN AGAIN')
+                } else {
+                    this.showToast('FAILED TO DELETE ACCOUNT')
+                }
             }
         },
 
@@ -387,7 +477,6 @@ export default {
     --muted: #555;
     --link: #5aa9e6;
     --serif: 'Italiana', serif;
-
     padding: 0 0.6rem 6rem;
     background: #fff;
     color: #000;
@@ -415,7 +504,7 @@ export default {
     outline-offset: 3px;
 }
 
-/* ---------- Hero ---------- */
+/* Hero */
 .profile__hero {
     position: relative;
     height: 21rem;
@@ -447,7 +536,7 @@ export default {
     letter-spacing: 0.02em;
 }
 
-/* ---------- User ---------- */
+/* User */
 .user {
     display: flex;
     flex-wrap: wrap;
@@ -515,7 +604,7 @@ export default {
     color: var(--muted);
 }
 
-/* ---------- My destinations ---------- */
+/* Destinations */
 .mine {
     padding: 3.5rem 1rem 0;
 }
@@ -628,7 +717,7 @@ export default {
     font-size: 0.95rem;
 }
 
-/* ---------- Account details ---------- */
+/* Account */
 .account {
     display: flex;
     flex-wrap: wrap;
@@ -731,7 +820,8 @@ export default {
     background: #222;
 }
 
-.account__save:disabled {
+.account__save:disabled,
+.account__delete:disabled {
     cursor: default;
     opacity: 0.6;
 }
@@ -748,7 +838,7 @@ export default {
     cursor: pointer;
 }
 
-/* ---------- Toast ---------- */
+/* Toast */
 .toast {
     position: fixed;
     top: 1.5rem;
@@ -775,7 +865,7 @@ export default {
     transform: translate(-50%, -1rem);
 }
 
-/* ---------- Mobile ---------- */
+/* Mobile */
 @media (max-width: 700px) {
     .profile__hero {
         height: 16rem;
