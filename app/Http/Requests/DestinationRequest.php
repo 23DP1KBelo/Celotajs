@@ -25,7 +25,7 @@ class DestinationRequest extends FormRequest
         return [
             'title' => 'required|max:255',
             'description' => 'nullable|string',
-            'place_id' => 'required|exists:places,id',
+            'places_id' => 'required|exists:places,id',
         ];
     }
 
@@ -34,8 +34,8 @@ class DestinationRequest extends FormRequest
         return [
             'title.required' => 'Title is required.',
             'title.max' => 'Title cannot exceed 255 characters.',
-            'place_id.required' => 'Place ID is required.',
-            'place_id.exists' => 'Place ID must exist in the places table.',
+            'places_id.required' => 'Place ID is required.',
+            'places_id.exists' => 'Place ID must exist in the places table.',
         ];
     }
 }

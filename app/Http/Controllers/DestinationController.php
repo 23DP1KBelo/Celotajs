@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Destination;
+use App\Http\Resources\DestinationResource;
+use App\Http\Requests\DestinationRequest;
 
 class DestinationController extends Controller
 {
@@ -17,9 +20,14 @@ class DestinationController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(DestinationRequest $request)
     {
-        //
+        $destination = Destination::create($request->validated());
+
+        return response()->json([
+            'message' => 'Destination created successfully.',
+            'data' => new DestinationResource($destination),
+        ], 201);
     }
 
     /**
