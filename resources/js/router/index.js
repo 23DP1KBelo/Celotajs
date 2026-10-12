@@ -8,6 +8,7 @@ import AddDestination from '../components/pages/AddDestination.vue'
 import Login from '../components/pages/Login.vue'
 import Register from '../components/pages/Register.vue'
 import Profile from '../components/pages/Profile.vue'
+import Admin from '../components/pages/Admin.vue'
 
 const routes = [
     // Publiskās lapas — pieejamas bez login
@@ -42,6 +43,14 @@ const routes = [
         name: 'Profile',
         component: Profile,
         meta: { access: 'auth' }
+    },
+
+    // Tikai administratoriem
+    {
+        path: '/admin',
+        name: 'Admin',
+        component: Admin,
+        meta: { access: 'admin' }
     },
 
     // Login un Register
@@ -97,6 +106,20 @@ router.beforeEach((to) => {
         return {
             name: 'Login',
             query: { redirect: to.fullPath }
+        }
+    }
+
+    // Administrācijas panelis — tikai lomai "admin".
+    if (to.meta.access === 'admin') {
+        if (!isLoggedIn) {
+            return {
+                name: 'Login',
+                query: { redirect: to.fullPath }
+            }
+        }
+
+        if (user.role !== 'admin') {
+            return { name: 'Home' }
         }
     }
 
