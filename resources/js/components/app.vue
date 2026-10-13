@@ -9,6 +9,7 @@ const router = useRouter()
 
 const showHeader = computed(() => !route.meta.hideHeader)
 const isLoggedIn = computed(() => Boolean(auth.user))
+const isAdmin = computed(() => auth.user?.role === 'admin')
 
 onMounted(async () => {
     try {
@@ -53,6 +54,14 @@ async function handleLogout() {
                         class="header__link"
                     >
                         PROFILE
+                    </router-link>
+
+                    <router-link
+                        v-if="isAdmin"
+                        to="/admin"
+                        class="header__link"
+                    >
+                        ADMIN
                     </router-link>
                 </template>
             </nav>

@@ -8,6 +8,7 @@ use App\Http\Controllers\CountryController;
 use App\Http\Controllers\PlaceController;
 use App\Http\Controllers\DestinationController;
 use App\Http\Controllers\TripController;
+use App\Http\Controllers\AdminController;
 
 Route::get('/trip-destinations/recommendations', [TripDestinationController::class, 'recommendations']);
 Route::get('/recommendations/search', [TripDestinationController::class, 'searchRecommendations']);
@@ -81,4 +82,19 @@ Route::middleware('auth:sanctum')->group(function () {
     // update destination
     Route::put('/destinations/{id}', [DestinationController::class, 'update']);
 
+});
+
+// Administrācijas panelis — tikai lomai "admin"
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+
+    // Users
+    Route::get('/users', [AdminController::class, 'users']);
+    Route::put('/users/{id}/role', [AdminController::class, 'updateUserRole']);
+    Route::delete('/users/{id}', [AdminController::class, 'destroyUser']);
+
+    // Destinations
+    Route::get('/destinations', [AdminController::class, 'destinations']);
+    Route::put('/destinations/{id}', [AdminController::class, 'updateDestination']);
+    Route::put('/destinations/{id}/recommend', [AdminController::class, 'recommendDestination']);
+    Route::delete('/destinations/{id}', [AdminController::class, 'destroyDestination']);
 });
