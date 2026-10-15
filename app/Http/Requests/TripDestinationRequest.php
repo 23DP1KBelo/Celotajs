@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class TripDestinations extends FormRequest
+class TripDestinationRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,7 +23,7 @@ class TripDestinations extends FormRequest
     public function rules(): array
     {
         return [
-            'recommendations' => 'required|boolean',
+            'recommendations' => 'sometimes|boolean',
             'trip_id' => 'required|exists:trips,id',
             'destination_id' => 'required|exists:destinations,id',
         ];
@@ -34,7 +34,6 @@ class TripDestinations extends FormRequest
     public function messages(): array
     {
         return [
-            'recommendations.required' => 'Ieteikumu lauks ir obligāts.',
             'recommendations.boolean' => 'Ieteikumu laukam jābūt loģiskai vērtībai (true vai false).',
             'trip_id.required' => 'Ceļojuma ID ir obligāts.',
             'trip_id.exists' => 'Norādītajam ceļojuma ID ir jābūt reģistrētam ceļojumu tabulā.',

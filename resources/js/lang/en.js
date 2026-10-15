@@ -108,7 +108,11 @@ export default {
         basicInfo: 'BASIC INFORMATION',
         hint: 'ADD THIS PLACE TO YOUR LIST TO SET A BUDGET, PRIORITY, AND TRACK YOUR VISIT STATUS.',
         notFound: 'PLACE NOT FOUND.',
-        loadError: 'FAILED TO LOAD DESTINATION.'
+        loadError: 'FAILED TO LOAD DESTINATION.',
+        chooseTrip: 'ADD TO WHICH TRIP?',
+        addHere: 'ADD TO TRIP',
+        inTrips: 'IN YOUR TRIP: {trips}',
+        addFailed: 'COULD NOT ADD THIS PLACE TO YOUR LIST.'
     },
 
     login: {
