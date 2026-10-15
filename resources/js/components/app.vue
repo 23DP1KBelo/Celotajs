@@ -3,6 +3,7 @@
 import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { auth, fetchUser, logout } from '../auth.js'
+import { i18n, setLocale, t } from '../i18n.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -32,13 +33,13 @@ async function handleLogout() {
 <template>
     <v-app>
         <header v-if="showHeader" class="header">
-            <nav class="header__nav" aria-label="Main navigation">
+            <nav class="header__nav" :aria-label="t('nav.main')">
                 <router-link to="/" class="header__link">
-                    HOME
+                    {{ t('nav.home') }}
                 </router-link>
 
                 <router-link to="/discover" class="header__link">
-                    DISCOVER
+                    {{ t('nav.discover') }}
                 </router-link>
 
                 <template v-if="isLoggedIn">
@@ -46,14 +47,14 @@ async function handleLogout() {
                         to="/add-destination"
                         class="header__link"
                     >
-                        ADD DESTINATION
+                        {{ t('nav.addDestination') }}
                     </router-link>
 
                     <router-link
                         to="/profile"
                         class="header__link"
                     >
-                        PROFILE
+                        {{ t('nav.profile') }}
                     </router-link>
 
                     <router-link
@@ -61,13 +62,26 @@ async function handleLogout() {
                         to="/admin"
                         class="header__link"
                     >
-                        ADMIN
+                        {{ t('nav.admin') }}
                     </router-link>
                 </template>
             </nav>
 
             <div class="header__right">
-                <span class="header__lang">EN | LV</span>
+                <div class="header__lang" role="group" :aria-label="t('nav.language')">
+                    <template v-for="(locale, index) in ['en', 'lv']" :key="locale">
+                        <span v-if="index" aria-hidden="true">|</span>
+                        <button
+                            type="button"
+                            class="header__lang-btn"
+                            :class="{ 'header__lang-btn--on': i18n.locale === locale }"
+                            :aria-pressed="i18n.locale === locale"
+                            @click="setLocale(locale)"
+                        >
+                            {{ locale.toUpperCase() }}
+                        </button>
+                    </template>
+                </div>
 
                 <template v-if="auth.loaded">
                     <template v-if="!isLoggedIn">
@@ -75,14 +89,14 @@ async function handleLogout() {
                             to="/login"
                             class="pill pill--dark"
                         >
-                            LOG IN
+                            {{ t('nav.logIn') }}
                         </router-link>
 
                         <router-link
                             to="/register"
                             class="pill pill--light"
                         >
-                            SIGN UP
+                            {{ t('nav.signUp') }}
                         </router-link>
                     </template>
 
@@ -92,7 +106,7 @@ async function handleLogout() {
                         class="pill pill--light"
                         @click="handleLogout"
                     >
-                        LOG OUT
+                        {{ t('nav.logOut') }}
                     </button>
                 </template>
             </div>
@@ -168,7 +182,30 @@ body {
 }
 
 .header__lang {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
     white-space: nowrap;
+}
+
+.header__lang-btn {
+    padding: 0.2rem 0.15rem;
+    border: 0;
+    background: none;
+    color: #000;
+    font: inherit;
+    opacity: 0.5;
+    cursor: pointer;
+}
+
+.header__lang-btn--on {
+    opacity: 1;
+    text-decoration: underline;
+    text-underline-offset: 5px;
+}
+
+.header__lang-btn:hover {
+    opacity: 1;
 }
 
 .pill {

@@ -5,25 +5,25 @@
         </transition>
 
         <section class="admin__intro">
-            <h1>ADMIN<br>PANEL</h1>
-            <p>MANAGE USERS AND DESTINATIONS. CHANGES TAKE EFFECT IMMEDIATELY.</p>
+            <h1>{{ $t('admin.title') }}<br>{{ $t('admin.titleEnd') }}</h1>
+            <p>{{ $t('admin.intro') }}</p>
 
             <div class="stats">
                 <div>
                     <strong>{{ users.length }}</strong>
-                    <span>USERS</span>
+                    <span>{{ $t('admin.users') }}</span>
                 </div>
                 <div>
                     <strong>{{ adminCount }}</strong>
-                    <span>ADMINS</span>
+                    <span>{{ $t('admin.admins') }}</span>
                 </div>
                 <div>
                     <strong>{{ destinations.length }}</strong>
-                    <span>DESTINATIONS</span>
+                    <span>{{ $t('admin.destinations') }}</span>
                 </div>
                 <div>
                     <strong>{{ recommendedCount }}</strong>
-                    <span>RECOMMENDED</span>
+                    <span>{{ $t('admin.recommended') }}</span>
                 </div>
             </div>
         </section>
@@ -41,7 +41,7 @@
                         :aria-selected="tab === item.value"
                         @click="tab = item.value"
                     >
-                        {{ item.label }}
+                        {{ $t(item.label) }}
                     </button>
                 </div>
 
@@ -53,13 +53,13 @@
                     <input
                         v-model.trim="search"
                         type="search"
-                        :placeholder="tab === 'users' ? 'SEARCH USERS' : 'SEARCH DESTINATIONS'"
-                        :aria-label="tab === 'users' ? 'Search users' : 'Search destinations'"
+                        :placeholder="tab === 'users' ? $t('admin.searchUsers') : $t('admin.searchDestinations')"
+                        :aria-label="tab === 'users' ? $t('admin.searchUsersLabel') : $t('admin.searchDestinationsLabel')"
                     >
                 </label>
             </div>
 
-            <p v-if="loading" class="empty">LOADING...</p>
+            <p v-if="loading" class="empty">{{ $t('common.loading') }}</p>
 
             <!-- ---------- Users ---------- -->
             <template v-else-if="tab === 'users'">
@@ -68,21 +68,21 @@
                         <div class="row__main">
                             <span class="row__title">{{ user.username }}</span>
                             <span class="row__meta">
-                                {{ user.email }} · {{ user.trips_count }} TRIPS · SINCE {{ year(user.created_at) }}
+                                {{ user.email }} · {{ $t('admin.trips', { count: user.trips_count }) }} · {{ $t('admin.since', { year: year(user.created_at) }) }}
                             </span>
                         </div>
 
                         <div class="row__actions">
-                            <span v-if="user.id === me?.id" class="badge badge--dark">YOU</span>
+                            <span v-if="user.id === me?.id" class="badge badge--dark">{{ $t('admin.you') }}</span>
 
                             <label v-else class="select">
                                 <select
                                     :value="user.role"
-                                    :aria-label="`Role for ${user.username}`"
+                                    :aria-label="$t('admin.roleFor', { name: user.username })"
                                     @change="changeRole(user, $event.target.value)"
                                 >
-                                    <option value="user">USER</option>
-                                    <option value="admin">ADMIN</option>
+                                    <option value="user">{{ $t('admin.roleUser') }}</option>
+                                    <option value="admin">{{ $t('admin.roleAdmin') }}</option>
                                 </select>
                                 <span class="select__arrow" aria-hidden="true">V</span>
                             </label>
@@ -93,13 +93,13 @@
                                 class="link link--danger"
                                 @click="deleteUser(user)"
                             >
-                                DELETE
+                                {{ $t('common.delete') }}
                             </button>
                         </div>
                     </li>
                 </ul>
 
-                <p v-else class="empty">NO USERS FOUND.</p>
+                <p v-else class="empty">{{ $t('admin.noUsers') }}</p>
             </template>
 
             <!-- ---------- Destinations ---------- -->
@@ -114,7 +114,7 @@
                         <div class="row__main">
                             <span class="row__title">{{ destination.title }}</span>
                             <span class="row__meta">
-                                {{ placeName(destination) }} · {{ destination.trips_count }} TRIPS
+                                {{ placeName(destination) }} · {{ $t('admin.trips', { count: destination.trips_count }) }}
                             </span>
                         </div>
 
@@ -124,18 +124,18 @@
                                 class="badge"
                                 :class="{ 'badge--dark': destination.recommended }"
                                 :disabled="!destination.trips_count"
-                                :title="destination.trips_count ? '' : 'Not linked to any trip yet'"
+                                :title="destination.trips_count ? '' : $t('admin.notLinked')"
                                 @click="toggleRecommended(destination)"
                             >
-                                {{ destination.recommended ? '✓ RECOMMENDED' : 'RECOMMEND' }}
+                                {{ destination.recommended ? $t('admin.isRecommended') : $t('admin.recommend') }}
                             </button>
 
                             <button type="button" class="link" @click="startEdit(destination)">
-                                {{ editing?.id === destination.id ? 'CLOSE' : 'EDIT' }}
+                                {{ editing?.id === destination.id ? $t('admin.close') : $t('admin.edit') }}
                             </button>
 
                             <button type="button" class="link link--danger" @click="deleteDestination(destination)">
-                                DELETE
+                                {{ $t('common.delete') }}
                             </button>
                         </div>
 
@@ -145,13 +145,13 @@
                             @submit.prevent="saveDestination"
                         >
                             <label class="field">
-                                <span>TITLE</span>
+                                <span>{{ $t('admin.fieldTitle') }}</span>
                                 <input v-model.trim="editing.title" type="text" required>
                                 <small v-if="errors.title">{{ errors.title[0] }}</small>
                             </label>
 
                             <label class="field">
-                                <span>PLACE</span>
+                                <span>{{ $t('admin.fieldPlace') }}</span>
                                 <select v-model="editing.places_id">
                                     <option v-for="place in places" :key="place.id" :value="place.id">
                                         {{ place.name.toUpperCase() }}
@@ -161,22 +161,22 @@
                             </label>
 
                             <label class="field field--wide">
-                                <span>DESCRIPTION</span>
+                                <span>{{ $t('common.description') }}</span>
                                 <textarea v-model="editing.description" rows="4"></textarea>
                                 <small v-if="errors.description">{{ errors.description[0] }}</small>
                             </label>
 
                             <div class="edit__actions">
                                 <button type="submit" class="save" :disabled="saving">
-                                    {{ saving ? 'SAVING...' : 'SAVE CHANGES' }}
+                                    {{ saving ? $t('common.saving') : $t('common.saveChanges') }}
                                 </button>
-                                <button type="button" class="link" @click="editing = null">CANCEL</button>
+                                <button type="button" class="link" @click="editing = null">{{ $t('common.cancel') }}</button>
                             </div>
                         </form>
                     </li>
                 </ul>
 
-                <p v-else class="empty">NO DESTINATIONS FOUND.</p>
+                <p v-else class="empty">{{ $t('admin.noDestinations') }}</p>
             </template>
         </section>
     </main>
@@ -191,8 +191,8 @@ export default {
         return {
             tab: 'users',
             tabs: [
-                { value: 'users', label: 'USERS' },
-                { value: 'destinations', label: 'DESTINATIONS' }
+                { value: 'users', label: 'admin.users' },
+                { value: 'destinations', label: 'admin.destinations' }
             ],
             search: '',
             users: [],
@@ -296,7 +296,7 @@ export default {
                 this.places = places.data.data
             } catch (error) {
                 console.error('Failed to load admin data:', error.response?.data || error.message)
-                this.showToast('FAILED TO LOAD DATA')
+                this.showToast(this.$t('admin.loadFailed'))
             } finally {
                 this.loading = false
             }
@@ -308,7 +308,10 @@ export default {
 
             try {
                 await axios.put(`/api/admin/users/${user.id}/role`, { role }, this.getAuthConfig())
-                this.showToast(`${user.username.toUpperCase()} IS NOW ${role.toUpperCase()}`)
+                this.showToast(this.$t('admin.roleChanged', {
+                    name: user.username.toUpperCase(),
+                    role: this.$t(role === 'admin' ? 'admin.roleAdmin' : 'admin.roleUser')
+                }))
             } catch (error) {
                 user.role = previous
                 this.showError(error)
@@ -317,7 +320,7 @@ export default {
 
         async deleteUser(user) {
             const confirmed = window.confirm(
-                `Vai tiešām dzēst lietotāju "${user.username}"? Tiks dzēsti arī visi viņa ceļojumi.`
+                this.$t('admin.confirmDeleteUser', { name: user.username })
             )
 
             if (!confirmed) return
@@ -325,7 +328,7 @@ export default {
             try {
                 await axios.delete(`/api/admin/users/${user.id}`, this.getAuthConfig())
                 this.users = this.users.filter(item => item.id !== user.id)
-                this.showToast('USER DELETED')
+                this.showToast(this.$t('admin.userDeleted'))
             } catch (error) {
                 this.showError(error)
             }
@@ -356,7 +359,7 @@ export default {
                 this.destinations[index] = { ...this.destinations[index], ...data.data }
 
                 this.editing = null
-                this.showToast('DESTINATION SAVED')
+                this.showToast(this.$t('admin.destinationSaved'))
             } catch (error) {
                 this.errors = error.response?.data?.errors || {}
                 if (!Object.keys(this.errors).length) this.showError(error)
@@ -375,7 +378,7 @@ export default {
                     this.getAuthConfig()
                 )
                 destination.recommended = recommended
-                this.showToast(recommended ? 'SHOWN ON DISCOVER' : 'REMOVED FROM DISCOVER')
+                this.showToast(this.$t(recommended ? 'admin.shownOnDiscover' : 'admin.removedFromDiscover'))
             } catch (error) {
                 this.showError(error)
             }
@@ -383,7 +386,7 @@ export default {
 
         async deleteDestination(destination) {
             const confirmed = window.confirm(
-                `Vai tiešām dzēst galamērķi "${destination.title}"? Tas tiks noņemts arī no visiem ceļojumiem.`
+                this.$t('admin.confirmDeleteDestination', { name: destination.title })
             )
 
             if (!confirmed) return
@@ -391,7 +394,7 @@ export default {
             try {
                 await axios.delete(`/api/admin/destinations/${destination.id}`, this.getAuthConfig())
                 this.destinations = this.destinations.filter(item => item.id !== destination.id)
-                this.showToast('DESTINATION DELETED')
+                this.showToast(this.$t('admin.destinationDeleted'))
             } catch (error) {
                 this.showError(error)
             }
@@ -415,9 +418,9 @@ export default {
             console.error(error.response?.data || error.message)
 
             if (error.message === 'AUTH_REQUIRED' || error.response?.status === 401) {
-                this.showToast('PLEASE LOG IN AGAIN')
+                this.showToast(this.$t('common.pleaseLogInAgain'))
             } else {
-                this.showToast(error.response?.data?.message?.toUpperCase() || 'SOMETHING WENT WRONG')
+                this.showToast(error.response?.data?.message?.toUpperCase() || this.$t('admin.somethingWrong'))
             }
         },
 

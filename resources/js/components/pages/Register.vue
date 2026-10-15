@@ -10,38 +10,38 @@
                     <svg width="26" height="8" viewBox="0 0 26 8" aria-hidden="true">
                         <path d="M26 4H1M4 1L1 4l3 3" fill="none" stroke="currentColor" stroke-width="0.8" />
                     </svg>
-                    BACK TO HOME
+                    {{ $t('common.backToHome') }}
                 </router-link>
 
-                <p class="register__kicker">JOIN WANDERLIST</p>
-                <h1 class="register__title">CREATE AN ACCOUNT</h1>
-                <p class="register__lead">SAVE, PLAN, AND REMEMBER EVERY PLACE YOU WANT TO GO.</p>
+                <p class="register__kicker">{{ $t('register.kicker') }}</p>
+                <h1 class="register__title">{{ $t('register.title') }}</h1>
+                <p class="register__lead">{{ $t('register.lead') }}</p>
 
                 <form class="register__form" @submit.prevent="register">
                     <div class="field">
-                        <label for="name">USERNAME</label>
+                        <label for="name">{{ $t('common.username') }}</label>
                         <input
                             id="name"
                             v-model="Username"
                             type="text"
                             autocomplete="name"
-                            placeholder="YOUR NAME"
+                            :placeholder="$t('common.yourName')"
                         >
                     </div>
 
                     <div class="field">
-                        <label for="email">EMAIL</label>
+                        <label for="email">{{ $t('common.email') }}</label>
                         <input
                             id="email"
                             v-model="email"
                             type="email"
                             autocomplete="email"
-                            placeholder="YOU@EXAMPLE.COM"
+                            :placeholder="$t('common.emailPlaceholder')"
                         >
                     </div>
 
                     <div class="field">
-                        <label for="password">PASSWORD</label>
+                        <label for="password">{{ $t('common.password') }}</label>
                         <input
                             id="password"
                             v-model="password"
@@ -56,12 +56,12 @@
                     </p>
 
                     <button type="submit" class="register__submit">
-                        CREATE ACCOUNT
+                        {{ $t('register.submit') }}
                     </button>
 
                     <p class="register__signin">
-                        ALREADY HAVE ACCOUNT?
-                        <router-link to="/login">SIGN IN</router-link>
+                        {{ $t('register.haveAccount') }}
+                        <router-link to="/login">{{ $t('common.signIn') }}</router-link>
                     </p>
                 </form>
             </div>
@@ -99,14 +99,14 @@ export default {
 
                 console.log(response.data)
 
-                this.message = 'Registration successful!'
+                this.message = this.$t('register.success')
                 this.$router.push('/login')
 
             } catch (error) {
                 console.log(error.response)
 
                 this.message =
-                    error.response?.data?.message || 'Registration failed'
+                    error.response?.data?.message || this.$t('register.failed')
             }
         }
     }

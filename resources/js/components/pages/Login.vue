@@ -10,27 +10,27 @@
                     <svg width="26" height="8" viewBox="0 0 26 8" aria-hidden="true">
                         <path d="M26 4H1M4 1L1 4l3 3" fill="none" stroke="currentColor" stroke-width="0.8" />
                     </svg>
-                    BACK TO HOME
+                    {{ $t('common.backToHome') }}
                 </router-link>
 
-                <p class="login__kicker">WELCOME BACK</p>
-                <h1 class="login__title">SIGN IN</h1>
-                <p class="login__lead">PICK UP WHERE YOU LEFT OFF WITH YOUR SAVED PLACES.</p>
+                <p class="login__kicker">{{ $t('login.kicker') }}</p>
+                <h1 class="login__title">{{ $t('common.signIn') }}</h1>
+                <p class="login__lead">{{ $t('login.lead') }}</p>
 
                 <form class="login__form" @submit.prevent="login">
                     <div class="field">
-                        <label for="email">USERNAME</label>
+                        <label for="email">{{ $t('common.username') }}</label>
                         <input
                             id="email"
                             v-model="Username"
                             type="text"
                             autocomplete="username"
-                            placeholder="YOUR USERNAME"
+                            :placeholder="$t('login.usernamePlaceholder')"
                         >
                     </div>
 
                     <div class="field">
-                        <label for="password">PASSWORD</label>
+                        <label for="password">{{ $t('common.password') }}</label>
                         <input
                             id="password"
                             v-model="password"
@@ -48,11 +48,11 @@
                         class="login__submit"
                         :disabled="loading"
                     >
-                        {{ loading ? 'LOGGING IN...' : 'SIGN IN' }}
+                        {{ loading ? $t('login.loggingIn') : $t('common.signIn') }}
                     </button>
                     <p class="login__switch">
-                        NEW TO WANDERLIST?
-                        <router-link to="/register">CREATE AN ACCOUNT</router-link>
+                        {{ $t('login.newHere') }}
+                        <router-link to="/register">{{ $t('login.createAccount') }}</router-link>
                     </p>
                 </form>
             </div>
@@ -85,7 +85,7 @@ export default {
                     this.password
                 )
 
-                this.message = 'Login successful!'
+                this.message = this.$t('login.success')
 
                 await this.$router.push('/profile')
             } catch (error) {
@@ -96,7 +96,7 @@ export default {
 
                 this.message =
                     error.response?.data?.message ||
-                    'Login failed. Please try again.'
+                    this.$t('login.failed')
             } finally {
                 this.loading = false
             }

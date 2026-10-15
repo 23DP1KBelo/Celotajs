@@ -3,17 +3,15 @@
         <!-- Hero -->
         <section class="hero">
             <p class="hero__text hero__text--left">
-                Save the places you've always dreamed of visiting. Organize them,
-                prioritize them, and watch your list turn into real adventures.
+                {{ $t('home.heroLeft') }}
             </p>
 
             <router-link to="/register" class="hero__cta">
-                START YOUR JOURNEY →
+                {{ $t('home.heroCta') }}
             </router-link>
 
             <p class="hero__text hero__text--right">
-                Keep all the places you want to see, things you want to experience,
-                and adventures you want to have in one place.
+                {{ $t('home.heroRight') }}
             </p>
 
             <h1 class="hero__brand">WANDERLIST</h1>
@@ -22,12 +20,12 @@
         <!-- Recommended destinations -->
         <section class="recommended">
             <div class="recommended__head">
-                <h2>RECOMMENDED DESTINATIONS</h2>
+                <h2>{{ $t('home.recommended') }}</h2>
 
                 <div class="recommended__arrows">
                     <button
                         type="button"
-                        aria-label="Previous destinations"
+                        :aria-label="$t('home.previous')"
                         @click="scrollCards(-1)"
                     >
                         &lt;
@@ -35,7 +33,7 @@
 
                     <button
                         type="button"
-                        aria-label="Next destinations"
+                        :aria-label="$t('home.next')"
                         @click="scrollCards(1)"
                     >
                         &gt;
@@ -44,18 +42,18 @@
             </div>
 
             <p v-if="loading" class="recommended__message">
-                Loading destinations...
+                {{ $t('home.loading') }}
             </p>
 
             <p v-else-if="error" class="recommended__message">
-                {{ error }}
+                {{ $t(error) }}
             </p>
 
             <p
                 v-else-if="destinations.length === 0"
                 class="recommended__message"
             >
-                No recommended destinations available.
+                {{ $t('home.empty') }}
             </p>
 
             <ul v-else ref="track" class="cards">
@@ -74,7 +72,7 @@
                     </div>
 
                     <router-link to="/discover" class="card__link">
-                        EXPLORE →
+                        {{ $t('home.explore') }}
                     </router-link>
                 </li>
             </ul>
@@ -82,15 +80,15 @@
 
         <!-- How it works -->
         <section class="how">
-            <p class="how__label">HOW IT WORKS</p>
+            <p class="how__label">{{ $t('home.howLabel') }}</p>
 
             <div class="how__head">
-                <h2>PLAN SAVE <em>REMEMBER</em></h2>
+                <h2>{{ $t('home.howTitle') }} <em>{{ $t('home.howTitleAccent') }}</em></h2>
 
                 <p>
-                    YOUR PLACES, YOUR PLANS, YOUR ADVENTURES
+                    {{ $t('home.howText') }}
                     <br>
-                    — ALL IN ONE PLACE.
+                    {{ $t('home.howTextEnd') }}
                 </p>
             </div>
 
@@ -112,17 +110,16 @@
             <div class="why__img"></div>
 
             <div class="why__body">
-                <p class="why__label">WHY IT MATTERS</p>
+                <p class="why__label">{{ $t('home.whyLabel') }}</p>
 
-                <h2>PLACES WORTH REMEMBERING</h2>
+                <h2>{{ $t('home.whyTitle') }}</h2>
 
                 <p class="why__text">
-                    FROM HIDDEN MOUNTAIN LAKES TO CITIES YOU'VE ALWAYS WANTED TO SEE —
-                    KEEP EVERY DESTINATION THAT INSPIRES YOU IN ONE PLACE.
+                    {{ $t('home.whyText') }}
                 </p>
 
                 <router-link to="/discover" class="why__link">
-                    EXPLORE DESTINATIONS →
+                    {{ $t('home.whyLink') }}
                 </router-link>
             </div>
         </section>
@@ -137,25 +134,17 @@ export default {
         return {
             destinations: [],
             loading: false,
-            error: '',
+            error: ''
+        }
+    },
 
-            steps: [
-                {
-                    number: '01',
-                    title: 'PLAN',
-                    text: "CREATE YOUR PERSONAL LIST OF DREAM DESTINATIONS, FROM FAMOUS FJORDS TO THE TRAIL NOBODY'S HEARD OF YET."
-                },
-                {
-                    number: '02',
-                    title: 'SAVE',
-                    text: 'SET A BUDGET AND PRIORITY FOR EVERY PLACE, SO YOU ALWAYS KNOW WHAT YOU ARE SAVING FOR NEXT.'
-                },
-                {
-                    number: '03',
-                    title: 'REMEMBER',
-                    text: "MARK THE PLACES YOU'VE VISITED AND KEEP YOUR TRAVEL MEMORIES ORGANIZED, ONE TRIP AT A TIME."
-                }
-            ]
+    computed: {
+        steps() {
+            return ['plan', 'save', 'remember'].map((key, index) => ({
+                number: `0${index + 1}`,
+                title: this.$t(`home.steps.${key}`),
+                text: this.$t(`home.steps.${key}Text`)
+            }))
         }
     },
 
@@ -207,7 +196,7 @@ export default {
                     error.response?.data || error.message
                 )
 
-                this.error = 'Failed to load recommended destinations.'
+                this.error = 'home.loadError'
                 this.destinations = []
             } finally {
                 this.loading = false
