@@ -1,10 +1,9 @@
 <template>
     <main class="discover">
         <section class="discover__intro">
-            <h1>FIND YOUR<br>DESTINATION</h1>
+            <h1>{{ $t('discover.title') }}<br>{{ $t('discover.titleEnd') }}</h1>
             <p>
-                MARK THE PLACES YOU'VE VISITED AND KEEP YOUR TRAVEL MEMORIES
-                ORGANIZED, ONE TRIP AT A TIME.
+                {{ $t('discover.intro') }}
             </p>
         </section>
 
@@ -34,8 +33,8 @@
                 <input
                     v-model="search"
                     type="search"
-                    placeholder="SEARCH DESTINATIONS"
-                    aria-label="Search destinations"
+                    :placeholder="$t('discover.searchPlaceholder')"
+                    :aria-label="$t('discover.searchLabel')"
                 >
             </label>
 
@@ -43,16 +42,16 @@
                 <label class="filter">
                     <select
                         v-model="category"
-                        aria-label="Filter by category"
+                        :aria-label="$t('discover.categoryLabel')"
                     >
-                        <option value="">ALL CATEGORIES</option>
+                        <option value="">{{ $t('discover.allCategories') }}</option>
 
                         <option
                             v-for="item in categories"
-                            :key="item.value"
-                            :value="item.value"
+                            :key="item"
+                            :value="item"
                         >
-                            {{ item.label }}
+                            {{ $t(`categories.${item}`) }}
                         </option>
                     </select>
 
@@ -62,11 +61,11 @@
                 <label v-if="isLoggedIn" class="filter">
                     <select
                         v-model="status"
-                        aria-label="Filter by status"
+                        :aria-label="$t('discover.statusLabel')"
                     >
-                        <option value="">ALL STATUSES</option>
-                        <option value="visited">VISITED</option>
-                        <option value="unvisited">UNVISITED</option>
+                        <option value="">{{ $t('discover.allStatuses') }}</option>
+                        <option value="visited">{{ $t('common.visited') }}</option>
+                        <option value="unvisited">{{ $t('common.unvisited') }}</option>
                     </select>
 
                     <span class="filter__arrow" aria-hidden="true">V</span>
@@ -78,16 +77,16 @@
                     class="filters__clear"
                     @click="clearFilters"
                 >
-                    CLEAR
+                    {{ $t('discover.clear') }}
                 </button>
             </div>
 
             <p v-if="loading" class="empty">
-                LOADING DESTINATIONS...
+                {{ $t('discover.loading') }}
             </p>
 
             <p v-else-if="error" class="empty">
-                {{ error }}
+                {{ $t(error) }}
             </p>
 
             <ul v-else-if="filtered.length" class="grid">
@@ -108,7 +107,7 @@
             </ul>
 
             <p v-else class="empty">
-                NO DESTINATIONS FOUND. TRY A DIFFERENT SEARCH.
+                {{ $t('discover.empty') }}
             </p>
         </section>
     </main>
@@ -129,11 +128,7 @@ export default {
             error: '',
             searchTimeout: null,
 
-            categories: [
-                { value: 'rest', label: 'REST' },
-                { value: 'nature', label: 'NATURE' },
-                { value: 'adventure', label: 'ADVENTURE' }
-            ]
+            categories: ['rest', 'nature', 'adventure']
         }
     },
 
@@ -275,8 +270,8 @@ export default {
                 this.destinations = []
 
                 this.error = error.response?.status === 401
-                    ? 'PLEASE LOG IN TO FILTER BY STATUS.'
-                    : 'FAILED TO LOAD DESTINATIONS. PLEASE TRY AGAIN.'
+                    ? 'discover.loginToFilter'
+                    : 'discover.loadError'
             } finally {
                 this.loading = false
             }

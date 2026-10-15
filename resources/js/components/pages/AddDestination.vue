@@ -5,46 +5,46 @@
                 <svg width="30" height="8" viewBox="0 0 30 8" aria-hidden="true">
                     <path d="M30 4H1M4 1L1 4l3 3" fill="none" stroke="currentColor" stroke-width="0.8" />
                 </svg>
-                BACK TO DISCOVER
+                {{ $t('common.backToDiscover') }}
             </router-link>
 
-            <h1>ADD A DESTINATION</h1>
-            <p class="add__lead">SHARE A PLACE WORTH VISITING AND ADD IT TO ONE OF YOUR TRIPS.</p>
+            <h1>{{ $t('add.title') }}</h1>
+            <p class="add__lead">{{ $t('add.lead') }}</p>
 
             <p v-if="!isLoggedIn && auth.loaded !== false" class="notice" role="alert">
-                Please login to add a destination
-                <router-link to="/login">LOG IN</router-link>
+                {{ $t('add.loginNotice') }}
+                <router-link to="/login">{{ $t('common.logIn') }}</router-link>
             </p>
 
             <form class="form" novalidate @submit.prevent="submit">
                 <fieldset class="lock" :disabled="!isLoggedIn">
                     <div class="field">
-                        <label for="title">NAME</label>
-                        <input id="title" v-model.trim="form.title" type="text" placeholder="E.G. GEIRANGERFJORD">
+                        <label for="title">{{ $t('add.name') }}</label>
+                        <input id="title" v-model.trim="form.title" type="text" :placeholder="$t('add.namePlaceholder')">
                         <small v-if="errors.title" class="field__error">{{ errors.title[0] }}</small>
                     </div>
 
                     <div class="row">
                         <div class="field">
-                            <label for="country">COUNTRY</label>
-                            <input id="country" v-model.trim="form.country" type="text" placeholder="E.G. NORWAY">
+                            <label for="country">{{ $t('common.country') }}</label>
+                            <input id="country" v-model.trim="form.country" type="text" :placeholder="$t('add.countryPlaceholder')">
                             <small v-if="errors.country" class="field__error">{{ errors.country[0] }}</small>
                         </div>
 
                         <div class="field">
-                            <label for="city">CITY</label>
-                            <input id="city" v-model.trim="form.city" type="text" placeholder="E.G. GEIRANGER">
+                            <label for="city">{{ $t('common.city') }}</label>
+                            <input id="city" v-model.trim="form.city" type="text" :placeholder="$t('add.cityPlaceholder')">
                             <small v-if="errors.city" class="field__error">{{ errors.city[0] }}</small>
                         </div>
                     </div>
 
                     <div class="field">
-                        <label for="category">CATEGORY</label>
+                        <label for="category">{{ $t('common.category') }}</label>
                         <div class="select">
                             <select id="category" v-model="form.category">
-                                <option value="" disabled>CHOOSE A CATEGORY</option>
-                                <option v-for="item in categories" :key="item" :value="item">
-                                    {{ item.toUpperCase() }}
+                                <option value="" disabled>{{ $t('common.chooseCategory') }}</option>
+                                <option v-for="item in categories" :key="item.value" :value="item.value">
+                                    {{ $t(item.label) }}
                                 </option>
                             </select>
                             <span class="select__arrow" aria-hidden="true">V</span>
@@ -53,32 +53,32 @@
                     </div>
 
                     <fieldset class="field status">
-                        <legend>STATUS</legend>
+                        <legend>{{ $t('common.status') }}</legend>
                         <label v-for="item in statuses" :key="item.value" class="status__option">
                             <input v-model="form.status" type="radio" name="status" :value="item.value">
-                            <span>{{ item.label }}</span>
+                            <span>{{ $t(item.label) }}</span>
                         </label>
                     </fieldset>
 
                     <!-- Trip: existing or new -->
                     <fieldset class="field status">
-                        <legend>ADD TO TRIP</legend>
+                        <legend>{{ $t('add.addToTrip') }}</legend>
 
                         <label v-if="trips.length" class="status__option">
                             <input v-model="tripMode" type="radio" name="tripMode" value="existing">
-                            <span>EXISTING TRIP</span>
+                            <span>{{ $t('add.existingTrip') }}</span>
                         </label>
                         <label class="status__option">
                             <input v-model="tripMode" type="radio" name="tripMode" value="new">
-                            <span>NEW TRIP</span>
+                            <span>{{ $t('add.newTrip') }}</span>
                         </label>
                     </fieldset>
 
                     <div v-if="tripMode === 'existing'" class="field">
-                        <label for="trip">YOUR TRIP</label>
+                        <label for="trip">{{ $t('add.yourTrip') }}</label>
                         <div class="select">
                             <select id="trip" v-model="form.trip_id">
-                                <option value="" disabled>CHOOSE A TRIP</option>
+                                <option value="" disabled>{{ $t('add.chooseTrip') }}</option>
                                 <option v-for="trip in trips" :key="trip.id" :value="trip.id">
                                     {{ trip.name }}
                                 </option>
@@ -90,24 +90,24 @@
 
                     <div v-else class="trip-new">
                         <div class="field">
-                            <label for="trip_name">TRIP NAME</label>
+                            <label for="trip_name">{{ $t('common.tripName') }}</label>
                             <input
                                 id="trip_name"
                                 v-model.trim="form.trip_name"
                                 type="text"
                                 maxlength="100"
-                                placeholder="E.G. SUMMER IN NORWAY"
+                                :placeholder="$t('common.tripNamePlaceholder')"
                             >
                             <small v-if="errors.trip_name" class="field__error">{{ errors.trip_name[0] }}</small>
                         </div>
 
                         <div class="field">
-                            <label for="trip_description">TRIP DESCRIPTION</label>
+                            <label for="trip_description">{{ $t('add.tripDescription') }}</label>
                             <textarea
                                 id="trip_description"
                                 v-model.trim="form.trip_description"
                                 rows="3"
-                                placeholder="WHAT IS THIS TRIP ABOUT?"
+                                :placeholder="$t('common.tripDescriptionPlaceholder')"
                             />
                             <small v-if="errors.trip_description" class="field__error">{{ errors.trip_description[0] }}</small>
                         </div>
@@ -115,30 +115,30 @@
 
                     <!-- Visibility -->
                     <fieldset class="field status">
-                        <legend>VISIBILITY</legend>
+                        <legend>{{ $t('add.visibility') }}</legend>
                         <label v-for="item in visibilities" :key="item.value" class="status__option">
                             <input v-model="form.visibility" type="radio" name="visibility" :value="item.value">
-                            <span>{{ item.label }}</span>
+                            <span>{{ $t(item.label) }}</span>
                         </label>
                         <p class="hint">{{ visibilityHint }}</p>
                     </fieldset>
 
                     <div class="field">
-                        <label for="description">DESCRIPTION</label>
+                        <label for="description">{{ $t('common.description') }}</label>
                         <textarea
                             id="description"
                             v-model.trim="form.description"
                             rows="4"
-                            placeholder="WHAT MAKES THIS PLACE SPECIAL?"
+                            :placeholder="$t('add.descriptionPlaceholder')"
                         />
                         <small v-if="errors.description" class="field__error">{{ errors.description[0] }}</small>
                     </div>
 
                     <div class="field">
-                        <label for="image">PHOTO</label>
+                        <label for="image">{{ $t('add.photo') }}</label>
                         <label class="drop" :class="{ 'drop--filled': preview }" for="image">
-                            <img v-if="preview" :src="preview" alt="Selected photo preview">
-                            <span v-else>CLICK TO CHOOSE A PHOTO (JPG, PNG, WEBP · MAX 5 MB)</span>
+                            <img v-if="preview" :src="preview" :alt="$t('add.photoAlt')">
+                            <span v-else>{{ $t('add.photoHint') }}</span>
                         </label>
                         <input id="image" class="drop__input" type="file" accept="image/*" @change="onFile">
                         <small v-if="errors.image" class="field__error">{{ errors.image[0] }}</small>
@@ -149,7 +149,7 @@
                     </p>
 
                     <button type="submit" class="submit" :disabled="loading">
-                        {{ loading ? 'SAVING…' : 'ADD DESTINATION' }}
+                        {{ loading ? $t('add.saving') : $t('add.submit') }}
                     </button>
                 </fieldset>
             </form>
@@ -183,14 +183,18 @@ export default {
             file: null,
             preview: '',
 
-            categories: ['Daba', 'Atpūta', 'Izklaide'],
+            categories: [
+                { value: 'Daba', label: 'categories.nature' },
+                { value: 'Atpūta', label: 'categories.rest' },
+                { value: 'Izklaide', label: 'categories.adventure' }
+            ],
             statuses: [
-                { value: 'not_visited', label: 'NEAPMEKLĒTS' },
-                { value: 'visited', label: 'APMEKLĒTS' }
+                { value: 'not_visited', label: 'common.notVisited' },
+                { value: 'visited', label: 'common.visited' }
             ],
             visibilities: [
-                { value: 'private', label: 'PRIVATE' },
-                { value: 'public', label: 'PUBLIC' }
+                { value: 'private', label: 'add.private' },
+                { value: 'public', label: 'add.public' }
             ],
 
             // user's trips come from GET /api/user/trips
@@ -211,8 +215,8 @@ export default {
 
         visibilityHint() {
             return this.form.visibility === 'public'
-                ? 'EVERYONE CAN FIND THIS PLACE ON THE DISCOVER PAGE.'
-                : 'ONLY YOU CAN SEE THIS PLACE, INSIDE YOUR TRIP.'
+                ? this.$t('add.publicHint')
+                : this.$t('add.privateHint')
         }
     },
 
@@ -259,7 +263,7 @@ export default {
             if (file.size > 5 * 1024 * 1024) {
                 this.file = null
                 event.target.value = ''
-                this.errors = { ...this.errors, image: ['The photo must be smaller than 5 MB.'] }
+                this.errors = { ...this.errors, image: [this.$t('add.photoTooBig')] }
                 return
             }
 
@@ -280,16 +284,16 @@ export default {
 
             required.forEach((key) => {
                 if (!this.form[key]) {
-                    errors[key] = ['This field is required.']
+                    errors[key] = [this.$t('add.required')]
                 }
             })
 
             if (this.tripMode === 'existing' && !this.form.trip_id) {
-                errors.trip_id = ['Please choose a trip.']
+                errors.trip_id = [this.$t('add.chooseTripError')]
             }
 
             if (this.tripMode === 'new' && !this.form.trip_name) {
-                errors.trip_name = ['Please enter a trip name.']
+                errors.trip_name = [this.$t('add.tripNameError')]
             }
 
             this.errors = errors
@@ -330,7 +334,7 @@ export default {
                 await axios.post('/api/destinations', data, { withCredentials: true })
 
                 this.success = true
-                this.message = 'Destination added!'
+                this.message = this.$t('add.added')
                 this.form = emptyForm()
                 this.file = null
                 this.clearPreview()
@@ -349,7 +353,7 @@ export default {
 
                 this.success = false
                 this.errors = error.response?.data?.errors || {}
-                this.message = error.response?.data?.message || 'Could not add destination'
+                this.message = error.response?.data?.message || this.$t('add.failed')
             } finally {
                 this.loading = false
             }

@@ -6,8 +6,8 @@
             </div>
         </transition>
         <header class="profile__hero">
-            <p>Your saved places, your visited ones, and everything about your account in one place.</p>
-            <h1>PROFILE</h1>
+            <p>{{ $t('profile.heroText') }}</p>
+            <h1>{{ $t('profile.title') }}</h1>
         </header>
         <section class="user">
             <div class="user__info">
@@ -18,9 +18,9 @@
                     </svg>
                 </div>
                 <div>
-                    <h2>{{ username || 'YOUR NAME' }}</h2>
+                    <h2>{{ username || $t('common.yourName') }}</h2>
                     <p>{{ user?.email || 'you@example.com' }}</p>
-                    <p v-if="memberSince">MEMBER SINCE {{ memberSince }}</p>
+                    <p v-if="memberSince">{{ $t('profile.memberSince', { year: memberSince }) }}</p>
                 </div>
             </div>
             <!-- <div class="stats">
@@ -40,20 +40,20 @@
         </section>
         <section class="mine">
             <div class="mine__head">
-                <h2>MY TRIPS</h2>
+                <h2>{{ $t('profile.myTrips') }}</h2>
                 <div class="mine__tools">
                     <div class="tabs" role="tablist">
-                        <button v-for="tab in tabs" :key="tab.value" type="button" role="tab" class="tabs__item" :class="{ 'tabs__item--on': filter === tab.value }" :aria-selected="filter === tab.value" @click="filter = tab.value">{{ tab.label }}</button>
+                        <button v-for="tab in tabs" :key="tab.value" type="button" role="tab" class="tabs__item" :class="{ 'tabs__item--on': filter === tab.value }" :aria-selected="filter === tab.value" @click="filter = tab.value">{{ $t(tab.label) }}</button>
                     </div>
-                    <button type="button" class="mine__add" @click="openModal">+ ADD TRIP</button>
+                    <button type="button" class="mine__add" @click="openModal">{{ $t('profile.addTrip') }}</button>
                 </div>
             </div>
-            <p v-if="loadingTrips" class="mine__empty">LOADING…</p>
-            <p v-else-if="!filteredTrips.length" class="mine__empty">NO TRIPS FOUND. CLICK “ADD TRIP” TO CREATE YOUR FIRST ONE.</p>
+            <p v-if="loadingTrips" class="mine__empty">{{ $t('common.loading') }}</p>
+            <p v-else-if="!filteredTrips.length" class="mine__empty">{{ $t('profile.noTrips') }}</p>
             <ul v-else class="grid trip-grid">
                 <li v-for="trip in filteredTrips" :key="trip.id">
                     <article class="card trip-card" :style="{ backgroundImage: trip.image ? `linear-gradient(transparent 45%,rgba(0,0,0,.5)),url('${trip.image}')` : 'linear-gradient(180deg,#75816c 55%,#394638)' }">
-                        <span class="card__badge" :class="{ 'card__badge--dark': trip.status === 'visited' }">{{ trip.status === 'visited' ? 'VISITED' : 'WANT TO VISIT' }}</span>
+                        <span class="card__badge" :class="{ 'card__badge--dark': trip.status === 'visited' }">{{ trip.status === 'visited' ? $t('common.visited') : $t('common.wantToVisit') }}</span>
                         <span class="card__name">{{ trip.title || trip.name }}</span>
                     </article>
                 </li>
@@ -61,25 +61,25 @@
         </section>
         <section class="account">
             <div class="account__intro">
-                <h2>ACCOUNT<br>DETAILS</h2>
-                <p>KEEP YOUR DETAILS UP TO DATE SO YOUR LIST IS ALWAYS YOURS.</p>
+                <h2>{{ $t('profile.accountTitle') }}<br>{{ $t('profile.accountTitleEnd') }}</h2>
+                <p>{{ $t('profile.accountText') }}</p>
             </div>
             <form class="account__form" @submit.prevent="saveChanges">
                 <label class="field">
-                    <span>FULL NAME</span>
+                    <span>{{ $t('profile.fullName') }}</span>
                     <input
                         :value="username"
                         type="text"
-                        placeholder="YOUR NAME"
+                        :placeholder="$t('common.yourName')"
                         readonly
                     >
                 </label>
                 <label class="field">
-                    <span>EMAIL</span>
+                    <span>{{ $t('common.email') }}</span>
                     <input
                         v-model.trim="form.email"
                         type="email"
-                        placeholder="YOU@EXAMPLE.COM"
+                        :placeholder="$t('common.emailPlaceholder')"
                         autocomplete="email"
                     >
                     <small v-if="errors.email">
@@ -87,11 +87,11 @@
                     </small>
                 </label>
                 <label class="field">
-                    <span>NEW PASSWORD</span>
+                    <span>{{ $t('profile.newPassword') }}</span>
                     <input
                         v-model="form.password"
                         type="password"
-                        placeholder="Leave empty to keep current password"
+                        :placeholder="$t('profile.newPasswordPlaceholder')"
                         autocomplete="new-password"
                     >
                     <small v-if="errors.password">
@@ -99,11 +99,11 @@
                     </small>
                 </label>
                 <label v-if="form.password" class="field">
-                    <span>CURRENT PASSWORD</span>
+                    <span>{{ $t('profile.currentPassword') }}</span>
                     <input
                         v-model="form.current_password"
                         type="password"
-                        placeholder="CURRENT PASSWORD"
+                        :placeholder="$t('profile.currentPassword')"
                         autocomplete="current-password"
                     >
                     <small v-if="errors.current_password">
@@ -116,7 +116,7 @@
                         class="account__save"
                         :disabled="saving"
                     >
-                        {{ saving ? 'SAVING...' : 'SAVE CHANGES' }}
+                        {{ saving ? $t('common.saving') : $t('common.saveChanges') }}
                     </button>
 
                     <button
@@ -125,7 +125,7 @@
                         :disabled="saving"
                         @click="deleteAccount"
                     >
-                        DELETE ACCOUNT
+                        {{ $t('profile.deleteAccount') }}
                     </button>
                 </div>
             </form>
@@ -144,36 +144,36 @@
                     aria-labelledby="trip-title"
                     @submit.prevent="createTrip"
                 >
-                    <div class="trip-stepper" aria-label="Trip creation progress">
+                    <div class="trip-stepper" :aria-label="$t('profile.progress')">
                         <span v-for="number in 3" :key="number"
                               class="trip-stepper__item"
                               :class="{ 'trip-stepper__item--active': step === number, 'trip-stepper__item--done': step > number }">
                             0{{ number }}
                         </span>
                     </div>
-                    <p class="trip-form__eyebrow">STEP 0{{ step }} / 03</p>
+                    <p class="trip-form__eyebrow">{{ $t('profile.step', { step }) }}</p>
                     <h2 id="trip-title">
-                        {{ step === 1 ? 'TRIP DETAILS' : step === 2 ? 'DATES & CATEGORY' : 'REVIEW & CONFIRM' }}
+                        {{ step === 1 ? $t('profile.stepDetails') : step === 2 ? $t('profile.stepDates') : $t('profile.stepReview') }}
                     </h2>
                     <div v-if="step === 1" class="form-step">
                         <label class="field">
-                            <span>TRIP NAME *</span>
+                            <span>{{ $t('common.tripName') }} *</span>
                             <input
                                 ref="tripName"
                                 v-model.trim="tripForm.title"
                                 type="text"
                                 maxlength="255"
-                                placeholder="E.G. SUMMER IN NORWAY"
+                                :placeholder="$t('common.tripNamePlaceholder')"
                                 required
                             >
                             <small v-if="tripErrors.title">{{ tripErrors.title[0] }}</small>
                         </label>
                         <label class="field">
-                            <span>DESCRIPTION</span>
+                            <span>{{ $t('common.description') }}</span>
                             <textarea
                                 v-model.trim="tripForm.description"
                                 rows="4"
-                                placeholder="WHAT IS THIS TRIP ABOUT?"
+                                :placeholder="$t('common.tripDescriptionPlaceholder')"
                             ></textarea>
                             <small v-if="tripErrors.description">{{ tripErrors.description[0] }}</small>
                         </label>
@@ -181,12 +181,12 @@
                     <div v-else-if="step === 2" class="form-step">
                         <div class="trip-form__row">
                             <label class="field">
-                                <span>DATE FROM *</span>
+                                <span>{{ $t('profile.dateFrom') }}</span>
                                 <input v-model="tripForm.date_from" type="date" required>
                                 <small v-if="tripErrors.date_from">{{ tripErrors.date_from[0] }}</small>
                             </label>
                             <label class="field">
-                                <span>DATE TILL *</span>
+                                <span>{{ $t('profile.dateTill') }}</span>
                                 <input
                                     v-model="tripForm.date_till"
                                     type="date"
@@ -197,31 +197,31 @@
                             </label>
                         </div>
                         <label class="field">
-                            <span>BUDGET (€)</span>
+                            <span>{{ $t('profile.budget') }}</span>
                             <input
                                 v-model="tripForm.budget"
                                 type="number"
                                 min="0"
                                 step="0.01"
-                                placeholder="E.G. 500"
+                                :placeholder="$t('profile.budgetPlaceholder')"
                             >
                             <small v-if="tripErrors.budget">{{ tripErrors.budget[0] }}</small>
                         </label>
                         <label class="field">
-                            <span>STATUS *</span>
+                            <span>{{ $t('common.status') }} *</span>
                             <select v-model="tripForm.status" required>
-                                <option value="unvisited">WANT TO VISIT</option>
-                                <option value="visited">VISITED</option>
+                                <option value="unvisited">{{ $t('common.wantToVisit') }}</option>
+                                <option value="visited">{{ $t('common.visited') }}</option>
                             </select>
                             <small v-if="tripErrors.status">{{ tripErrors.status[0] }}</small>
                         </label>
                         <label class="field">
-                            <span>KATEGORIJA</span>
+                            <span>{{ $t('common.category') }}</span>
                             <select v-model="tripForm.category">
-                                <option value="">IZVĒLIES KATEGORIJU</option>
-                                <option value="nature">DABA</option>
-                                <option value="adventure">IZKLAIDE</option>
-                                <option value="rest">ATPŪTA</option>
+                                <option value="">{{ $t('common.chooseCategory') }}</option>
+                                <option value="nature">{{ $t('categories.nature') }}</option>
+                                <option value="adventure">{{ $t('categories.adventure') }}</option>
+                                <option value="rest">{{ $t('categories.rest') }}</option>
                             </select>
                             <small v-if="tripErrors.category">
                                 {{ tripErrors.category[0] }}
@@ -230,23 +230,23 @@
                     </div>
                     <div v-else class="form-step">
                         <label class="field">
-                            <span>TRIP PHOTO (JPG, PNG · MAX 2 MB)</span>
+                            <span>{{ $t('profile.tripPhoto') }}</span>
                             <input type="file" accept=".jpg,.jpeg,.png" @change="onTripImageChange">
                             <small v-if="tripErrors.image">{{ tripErrors.image[0] }}</small>
                         </label>
                         <div class="trip-review">
-                            <p class="trip-review__label">TRIP NAME</p>
+                            <p class="trip-review__label">{{ $t('common.tripName') }}</p>
                             <p class="trip-review__value">{{ tripForm.title || '—' }}</p>
-                            <p class="trip-review__label">DATES</p>
+                            <p class="trip-review__label">{{ $t('profile.dates') }}</p>
                             <p class="trip-review__value">
                                 {{ tripForm.date_from || '—' }} — {{ tripForm.date_till || '—' }}
                             </p>
-                            <p class="trip-review__label">BUDGET</p>
+                            <p class="trip-review__label">{{ $t('profile.budgetLabel') }}</p>
                             <p class="trip-review__value">
-                                {{ tripForm.budget !== '' ? `€${tripForm.budget}` : 'Not specified' }}
+                                {{ tripForm.budget !== '' ? `€${tripForm.budget}` : $t('common.notSpecified') }}
                             </p>
-                            <p class="trip-review__label">CATEGORY</p>
-                            <p class="trip-review__value">{{ tripForm.category ? tripForm.category.toUpperCase() : 'Not specified' }}</p>
+                            <p class="trip-review__label">{{ $t('common.category') }}</p>
+                            <p class="trip-review__value">{{ tripForm.category ? $t(`categories.${tripForm.category}`) : $t('common.notSpecified') }}</p>
                         </div>
                         <p v-if="tripErrors.user_id" class="field__error">
                             {{ tripErrors.user_id[0] }}
@@ -262,14 +262,14 @@
                             class="trip-form__back"
                             @click="step--"
                         >
-                            ← BACK
+                            {{ $t('profile.back') }}
                         </button>
                         <button
                             type="button"
                             class="trip-form__cancel"
                             @click="closeModal"
                         >
-                            CANCEL
+                            {{ $t('common.cancel') }}
                         </button>
                         <button
                             v-if="step < 3"
@@ -277,7 +277,7 @@
                             class="account__save"
                             @click="nextTripStep"
                         >
-                            CONTINUE →
+                            {{ $t('profile.continue') }}
                         </button>
                         <button
                             v-else
@@ -285,7 +285,7 @@
                             class="account__save"
                             :disabled="creating"
                         >
-                            {{ creating ? 'SAVING...' : 'CONFIRM' }}
+                            {{ creating ? $t('common.saving') : $t('profile.confirm') }}
                         </button>
                     </div>
                 </form>
@@ -304,9 +304,9 @@ export default {
             user: auth.user,
             filter: 'all',
             tabs: [
-                { value: 'all', label: 'ALL' },
-                { value: 'unvisited', label: 'WANT TO VISIT' },
-                { value: 'visited', label: 'VISITED' }
+                { value: 'all', label: 'common.all' },
+                { value: 'unvisited', label: 'common.wantToVisit' },
+                { value: 'visited', label: 'common.visited' }
             ],
             trips: [],
             loadingTrips: true,
@@ -405,7 +405,7 @@ export default {
             await this.loadTrips()
         } catch (error) {
             console.error('Failed to load profile:', error)
-            this.showToast('FAILED TO LOAD PROFILE')
+            this.showToast(this.$t('profile.loadFailed'))
         }
     },
 
@@ -456,9 +456,9 @@ export default {
                     error.message === 'AUTH_REQUIRED' ||
                     error.response?.status === 401
                 ) {
-                    this.showToast('PLEASE LOG IN AGAIN')
+                    this.showToast(this.$t('common.pleaseLogInAgain'))
                 } else {
-                    this.showToast('FAILED TO LOAD TRIPS')
+                    this.showToast(this.$t('profile.tripsFailed'))
                 }
             } finally {
                 this.loadingTrips = false
@@ -512,7 +512,7 @@ export default {
             if (!allowedTypes.includes(file.type)) {
                 event.target.value = ''
                 this.tripErrors.image = [
-                    'Attēlam jābūt JPG vai PNG formātā.'
+                    this.$t('profile.imageType')
                 ]
                 return
             }
@@ -520,7 +520,7 @@ export default {
             if (file.size > 2 * 1024 * 1024) {
                 event.target.value = ''
                 this.tripErrors.image = [
-                    'Attēla izmērs nedrīkst pārsniegt 2 MB.'
+                    this.$t('profile.imageSize')
                 ]
                 return
             }
@@ -534,7 +534,7 @@ export default {
             if (this.step === 1) {
                 if (!this.tripForm.title.trim()) {
                     this.tripErrors.title = [
-                        'Ceļojuma nosaukums ir obligāts.'
+                        this.$t('profile.titleRequired')
                     ]
                     return
                 }
@@ -546,21 +546,21 @@ export default {
             if (this.step === 2) {
                 if (!this.tripForm.date_from) {
                     this.tripErrors.date_from = [
-                        'Norādi ceļojuma sākuma datumu.'
+                        this.$t('profile.dateFromRequired')
                     ]
                     return
                 }
 
                 if (!this.tripForm.date_till) {
                     this.tripErrors.date_till = [
-                        'Norādi ceļojuma beigu datumu.'
+                        this.$t('profile.dateTillRequired')
                     ]
                     return
                 }
 
                 if (this.tripForm.date_till <= this.tripForm.date_from) {
                     this.tripErrors.date_till = [
-                        'Beigu datumam jābūt vēlākam par sākuma datumu.'
+                        this.$t('profile.dateOrder')
                     ]
                     return
                 }
@@ -570,7 +570,7 @@ export default {
                     Number(this.tripForm.budget) < 0
                 ) {
                     this.tripErrors.budget = [
-                        'Budžets nedrīkst būt negatīvs.'
+                        this.$t('profile.budgetNegative')
                     ]
                     return
                 }
@@ -626,7 +626,7 @@ export default {
                 this.tripImage = null
 
                 await this.loadTrips()
-                this.showToast('TRIP CREATED')
+                this.showToast(this.$t('profile.tripCreated'))
             } catch (error) {
                 console.error(
                     'Failed to create trip:',
@@ -637,7 +637,7 @@ export default {
                     error.message === 'AUTH_REQUIRED' ||
                     error.response?.status === 401
                 ) {
-                    this.showToast('PLEASE LOG IN AGAIN')
+                    this.showToast(this.$t('common.pleaseLogInAgain'))
                     return
                 }
 
@@ -645,7 +645,7 @@ export default {
 
                 this.tripErrors.general = [
                     error.response?.data?.message ||
-                    'Neizdevās izveidot ceļojumu.'
+                    this.$t('profile.createFailed')
                 ]
 
                 this.step = 3
@@ -697,7 +697,7 @@ export default {
                     this.form.current_password = ''
                 }
 
-                this.showToast('CHANGES SAVED')
+                this.showToast(this.$t('profile.changesSaved'))
             } catch (error) {
                 console.error(
                     'Failed to save changes:',
@@ -708,7 +708,7 @@ export default {
                     error.message === 'AUTH_REQUIRED' ||
                     error.response?.status === 401
                 ) {
-                    this.showToast('PLEASE LOG IN AGAIN')
+                    this.showToast(this.$t('common.pleaseLogInAgain'))
                     await this.$router.push('/login')
                     return
                 }
@@ -716,9 +716,9 @@ export default {
                 this.errors = error.response?.data?.errors || {}
 
                 if (error.response?.status === 422) {
-                    this.showToast('PLEASE CHECK YOUR DETAILS')
+                    this.showToast(this.$t('profile.checkDetails'))
                 } else {
-                    this.showToast('FAILED TO SAVE CHANGES')
+                    this.showToast(this.$t('profile.saveFailed'))
                 }
             } finally {
                 this.saving = false
@@ -727,7 +727,7 @@ export default {
 
         async deleteAccount() {
             const confirmed = window.confirm(
-                'Vai tiešām vēlies dzēst savu kontu? Šo darbību nevar atsaukt.'
+                this.$t('profile.deleteConfirm')
             )
 
             if (!confirmed) return
@@ -755,9 +755,9 @@ export default {
                     error.message === 'AUTH_REQUIRED' ||
                     error.response?.status === 401
                 ) {
-                    this.showToast('PLEASE LOG IN AGAIN')
+                    this.showToast(this.$t('common.pleaseLogInAgain'))
                 } else {
-                    this.showToast('FAILED TO DELETE ACCOUNT')
+                    this.showToast(this.$t('profile.deleteFailed'))
                 }
             }
         },

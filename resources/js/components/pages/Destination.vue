@@ -2,8 +2,8 @@
     <main class="place">
         <transition name="toast">
             <div v-if="toast" class="toast" role="alert">
-                <span>Please register to add destination</span>
-                <router-link to="/register">REGISTER</router-link>
+                <span>{{ $t('destination.registerToAdd') }}</span>
+                <router-link to="/register">{{ $t('destination.register') }}</router-link>
             </div>
         </transition>
 
@@ -22,15 +22,15 @@
                         stroke-width="0.8"
                     />
                 </svg>
-                BACK TO DISCOVER
+                {{ $t('common.backToDiscover') }}
             </router-link>
 
             <p v-if="loading" class="place__missing">
-                LOADING DESTINATION...
+                {{ $t('destination.loading') }}
             </p>
 
             <p v-else-if="error" class="place__missing">
-                {{ error }}
+                {{ $t(error) }}
             </p>
 
             <template v-else-if="place">
@@ -52,7 +52,7 @@
                         :disabled="added"
                         @click="addToList"
                     >
-                        {{ added ? '✓ IN MY LIST' : '+ ADD TO MY LIST' }}
+                        {{ added ? $t('destination.inList') : $t('destination.addToList') }}
                     </button>
                 </header>
 
@@ -64,36 +64,35 @@
                 >
 
                 <p class="place__desc">
-                    {{ place.description || 'No description available.' }}
+                    {{ place.description || $t('destination.noDescription') }}
                 </p>
 
-                <h2 class="place__sub">BASIC INFORMATION</h2>
+                <h2 class="place__sub">{{ $t('destination.basicInfo') }}</h2>
 
                 <dl class="info">
                     <div class="info__row">
-                        <dt>COUNTRY</dt>
+                        <dt>{{ $t('common.country') }}</dt>
                         <dd>{{ place.country || '—' }}</dd>
                     </div>
 
                     <div class="info__row">
-                        <dt>CITY</dt>
+                        <dt>{{ $t('common.city') }}</dt>
                         <dd>{{ place.city || '—' }}</dd>
                     </div>
 
                     <div class="info__row">
-                        <dt>CATEGORY</dt>
-                        <dd>{{ place.category || '—' }}</dd>
+                        <dt>{{ $t('common.category') }}</dt>
+                        <dd>{{ place.category ? $t(`categories.${place.category}`) : '—' }}</dd>
                     </div>
                 </dl>
 
                 <p v-if="!added" class="place__hint">
-                    ADD THIS PLACE TO YOUR LIST TO SET A BUDGET, PRIORITY,
-                    AND TRACK YOUR VISIT STATUS.
+                    {{ $t('destination.hint') }}
                 </p>
             </template>
 
             <p v-else class="place__missing">
-                PLACE NOT FOUND.
+                {{ $t('destination.notFound') }}
             </p>
         </div>
     </main>
@@ -184,8 +183,8 @@ export default {
 
                 this.error =
                     error.response?.status === 404
-                        ? 'PLACE NOT FOUND.'
-                        : 'FAILED TO LOAD DESTINATION.'
+                        ? 'destination.notFound'
+                        : 'destination.loadError'
             } finally {
                 this.loading = false
             }
