@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\TripDestinations;
+use App\Http\Requests\TripDestinationRequest;
 use App\Http\Resources\DestinationResource;
 use App\Http\Resources\TripDestinationResource;
 use App\Models\Destination;
+use App\Models\Trip;
 use App\Models\TripDestination;
 use Illuminate\Http\Request;
 
@@ -129,15 +130,34 @@ class TripDestinationController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(TripDestinations $request)
+    public function store(TripDestinationRequest $request)
     {
-        $tripDestination = TripDestination::create(
-            $request->validated()
+        $trip = Trip::findOrFail($request->trip_id);
+
+        // Galamērķi drīkst pievienot tikai savam ceļojumam
+        if ((int) $trip->user_id !== $request->user()->id) {
+            return response()->json([
+                'message' => 'Šis ceļojums tev nepieder.',
+            ], 403);
+        }
+
+        // Ja galamērķis jau ir šajā ceļojumā, otrreiz to nepievieno
+        $tripDestination = TripDestination::firstOrCreate(
+            [
+                'trip_id' => $trip->id,
+                'destination_id' => $request->destination_id,
+            ],
+            [
+                'recommendations' => $request->boolean('recommendations'),
+            ]
         );
 
         return response()->json([
-            'message' => 'Trip destination created successfully.'
-        ], 201);
+            'message' => $tripDestination->wasRecentlyCreated
+                ? 'Trip destination created successfully.'
+                : 'Destination is already in this trip.',
+            'data' => new TripDestinationResource($tripDestination),
+        ], $tripDestination->wasRecentlyCreated ? 201 : 200);
     }
 
     /**
@@ -158,7 +178,7 @@ class TripDestinationController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(TripDestinations $request, string $id)
+    public function update(TripDestinationRequest $request, string $id)
     {
         $tripDestination = TripDestination::findOrFail($id);
 

@@ -56,6 +56,50 @@
                     </button>
                 </header>
 
+                <p v-if="added" class="place__in">
+                    {{ $t('destination.inTrips', { trips: inTrips.map(trip => trip.title).join(', ') }) }}
+                </p>
+
+                <form v-if="picker" class="picker" @submit.prevent="confirmAdd">
+                    <fieldset class="picker__options">
+                        <legend>{{ $t('destination.chooseTrip') }}</legend>
+
+                        <label v-for="trip in trips" :key="trip.id" class="picker__option">
+                            <input v-model="selectedTrip" type="radio" name="trip" :value="trip.id">
+                            <span>{{ trip.title }}</span>
+                        </label>
+
+                        <label class="picker__option">
+                            <input v-model="selectedTrip" type="radio" name="trip" value="new">
+                            <span>{{ $t('add.newTrip') }}</span>
+                        </label>
+                    </fieldset>
+
+                    <label v-if="selectedTrip === 'new'" class="picker__field">
+                        <span>{{ $t('common.tripName') }}</span>
+                        <input
+                            v-model.trim="newTripTitle"
+                            type="text"
+                            maxlength="255"
+                            :placeholder="$t('common.tripNamePlaceholder')"
+                        >
+                    </label>
+
+                    <p v-if="pickerError" class="picker__error" role="alert">
+                        {{ pickerError }}
+                    </p>
+
+                    <div class="picker__actions">
+                        <button type="submit" class="picker__save" :disabled="saving">
+                            {{ saving ? $t('common.saving') : $t('destination.addHere') }}
+                        </button>
+
+                        <button type="button" class="picker__cancel" @click="picker = false">
+                            {{ $t('common.cancel') }}
+                        </button>
+                    </div>
+                </form>
+
                 <img
                     class="place__img"
                     :src="place.image"
@@ -106,10 +150,38 @@ export default {
     data() {
         return {
             place: null,
-            added: false,
             loading: false,
             error: '',
-            toast: false
+            toast: false,
+
+            // Lietotāja ceļojumi (no GET /api/user/trips)
+            trips: [],
+            picker: false,
+            selectedTrip: '',
+            newTripTitle: '',
+            pickerError: '',
+            saving: false
+        }
+    },
+
+    computed: {
+        isLoggedIn() {
+            return Boolean(auth.user)
+        },
+
+        // Ceļojumi, kuros šis galamērķis jau ir
+        inTrips() {
+            if (!this.place) return []
+
+            return this.trips.filter(trip =>
+                (trip.trip_destinations || []).some(item =>
+                    Number(item.destination_id) === Number(this.place.id)
+                )
+            )
+        },
+
+        added() {
+            return this.inTrips.length > 0
         }
     },
 
@@ -119,9 +191,21 @@ export default {
 
     watch: {
         '$route.params.id'() {
-            this.added = false
             this.toast = false
+            this.picker = false
             this.fetchDestination()
+        },
+
+        isLoggedIn: {
+            immediate: true,
+            handler(loggedIn) {
+                if (loggedIn) {
+                    this.loadTrips()
+                } else {
+                    this.trips = []
+                    this.picker = false
+                }
+            }
         }
     },
 
@@ -199,38 +283,97 @@ export default {
             }
         },
 
-        async addToList() {
-            if (!auth.user) {
+        getAuthConfig() {
+            const token = localStorage.getItem('token')
+
+            if (!token) {
+                throw new Error('AUTH_REQUIRED')
+            }
+
+            return {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/json'
+                }
+            }
+        },
+
+        async loadTrips() {
+            try {
+                const { data } = await axios.get('/api/user/trips', this.getAuthConfig())
+
+                this.trips = Array.isArray(data) ? data : (data.data || [])
+            } catch (error) {
+                console.error(
+                    'Failed to load trips:',
+                    error.response?.data || error.message
+                )
+
+                this.trips = []
+            }
+        },
+
+        // Atver ceļojuma izvēli
+        addToList() {
+            if (!this.isLoggedIn) {
                 this.toast = true
                 return
             }
 
+            this.pickerError = ''
+            this.newTripTitle = ''
+            this.selectedTrip = this.trips[0]?.id ?? 'new'
+            this.picker = true
+        },
+
+        // Pievieno galamērķi izvēlētajam (vai jaunam) ceļojumam
+        async confirmAdd() {
+            this.pickerError = ''
+
+            if (this.selectedTrip === 'new' && !this.newTripTitle) {
+                this.pickerError = this.$t('add.tripNameError')
+                return
+            }
+
+            this.saving = true
+
             try {
-                const token = localStorage.getItem('token')
+                const config = this.getAuthConfig()
+                let tripId = this.selectedTrip
+
+                if (tripId === 'new') {
+                    const { data } = await axios.post(
+                        '/api/trips',
+                        { title: this.newTripTitle },
+                        config
+                    )
+
+                    tripId = data.trip.id
+                }
 
                 await axios.post(
-                    '/api/my-list',
+                    '/api/trip-destinations',
                     {
+                        trip_id: tripId,
                         destination_id: this.place.id
                     },
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    }
+                    config
                 )
 
-                this.added = true
-                this.toast = false
+                await this.loadTrips()
+                this.picker = false
             } catch (error) {
                 console.error(
                     'Failed to add destination:',
                     error.response?.data || error.message
                 )
 
-                if (error.response?.status === 401) {
-                    this.toast = true
-                }
+                this.pickerError =
+                    error.message === 'AUTH_REQUIRED' || error.response?.status === 401
+                        ? this.$t('common.pleaseLogInAgain')
+                        : error.response?.data?.message || this.$t('destination.addFailed')
+            } finally {
+                this.saving = false
             }
         }
     }
@@ -369,6 +512,129 @@ export default {
     font-size: 0.9rem;
     font-weight: 400;
     text-align: right;
+}
+
+.place__in {
+    margin: -2rem 0 2.5rem;
+    font-size: 0.8rem;
+    text-align: right;
+    color: var(--muted);
+}
+
+/* ---------- Trip picker ---------- */
+.picker {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin: -1.5rem 0 3.5rem auto;
+    max-width: 30rem;
+    padding: 1.8rem 2rem;
+    border: 1px solid #000;
+    border-radius: 1rem;
+}
+
+.picker__options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.picker__options legend {
+    margin-bottom: 1rem;
+    font-family: var(--serif);
+    font-size: 1.2rem;
+    letter-spacing: 0.04em;
+}
+
+.picker__option {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.picker__option input {
+    accent-color: #000;
+}
+
+.picker__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.picker__field span {
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+}
+
+.picker__field input {
+    padding: 0.6rem 0;
+    border: 0;
+    border-bottom: 1px solid #767676;
+    background: transparent;
+    font: inherit;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    outline: none;
+}
+
+.picker__field input:focus {
+    border-bottom-color: #000;
+    box-shadow: 0 1px 0 #000;
+}
+
+.picker__error {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #c0392b;
+}
+
+.picker__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem 1.5rem;
+}
+
+.picker__save {
+    padding: 0.9rem 2.2rem;
+    border: 0;
+    border-radius: 999px;
+    background: #000;
+    color: #fff;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.picker__save:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.picker__cancel {
+    padding: 0.3rem 0;
+    border: 0;
+    border-bottom: 1px solid #000;
+    background: none;
+    font: inherit;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.picker button:focus-visible,
+.picker input:focus-visible {
+    outline: 2px solid var(--link);
+    outline-offset: 3px;
 }
 
 .place__hint {

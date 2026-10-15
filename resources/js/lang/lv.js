@@ -108,7 +108,11 @@ export default {
         basicInfo: 'PAMATINFORMĀCIJA',
         hint: 'PIEVIENO ŠO VIETU SAVAM SARAKSTAM, LAI NOTEIKTU BUDŽETU, PRIORITĀTI UN SEKOTU APMEKLĒJUMA STATUSAM.',
         notFound: 'VIETA NAV ATRASTA.',
-        loadError: 'NEIZDEVĀS IELĀDĒT GALAMĒRĶI.'
+        loadError: 'NEIZDEVĀS IELĀDĒT GALAMĒRĶI.',
+        chooseTrip: 'KURAM CEĻOJUMAM PIEVIENOT?',
+        addHere: 'PIEVIENOT CEĻOJUMAM',
+        inTrips: 'TAVĀ CEĻOJUMĀ: {trips}',
+        addFailed: 'NEIZDEVĀS PIEVIENOT ŠO VIETU TAVAM SARAKSTAM.'
     },
 
     login: {
