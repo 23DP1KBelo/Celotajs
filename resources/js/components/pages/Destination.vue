@@ -95,21 +95,34 @@
                 {{ $t('destination.notFound') }}
             </p>
         </div>
+        <AddDestinationToTripDialog
+            v-if="place"
+            v-model="showTripDialog"
+            :destination-id="place.id"
+            @saved="handleDestinationSaved"
+        />
     </main>
 </template>
 
 <script>
 import axios from 'axios'
 import { auth } from '../../auth.js'
+import AddDestinationToTripDialog from '../pages/AddDestinationToTripDialog.vue'
 
 export default {
+    components: {
+        AddDestinationToTripDialog
+    },
     data() {
+        
         return {
             place: null,
             added: false,
             loading: false,
             error: '',
-            toast: false
+            toast: false,
+            showTripDialog: false
+
         }
     },
 
@@ -121,6 +134,7 @@ export default {
         '$route.params.id'() {
             this.added = false
             this.toast = false
+            this.showTripDialog = false
             this.fetchDestination()
         }
     },
@@ -199,39 +213,20 @@ export default {
             }
         },
 
-        async addToList() {
+        addToList() {
             if (!auth.user) {
                 this.toast = true
                 return
             }
 
-            try {
-                const token = localStorage.getItem('token')
+            this.toast = false
+            this.showTripDialog = true
+        },
 
-                await axios.post(
-                    '/api/my-list',
-                    {
-                        destination_id: this.place.id
-                    },
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    }
-                )
-
-                this.added = true
-                this.toast = false
-            } catch (error) {
-                console.error(
-                    'Failed to add destination:',
-                    error.response?.data || error.message
-                )
-
-                if (error.response?.status === 401) {
-                    this.toast = true
-                }
-            }
+        handleDestinationSaved() {
+            this.added = true
+            this.toast = false
+            this.showTripDialog = false
         }
     }
 }

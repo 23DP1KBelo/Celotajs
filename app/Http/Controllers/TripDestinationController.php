@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\TripDestinations;
 use App\Http\Resources\DestinationResource;
 use App\Http\Resources\TripDestinationResource;
 use App\Models\Destination;
 use App\Models\TripDestination;
+use App\Http\Requests\TripDestinationRequest;
 use Illuminate\Http\Request;
 
 class TripDestinationController extends Controller
@@ -129,14 +129,15 @@ class TripDestinationController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(TripDestinations $request)
+    public function store(TripDestinationRequest $request)
     {
         $tripDestination = TripDestination::create(
             $request->validated()
         );
 
         return response()->json([
-            'message' => 'Trip destination created successfully.'
+            'message' => 'Trip destination created successfully.',
+            'trip_destination' => $tripDestination,
         ], 201);
     }
 
@@ -158,7 +159,7 @@ class TripDestinationController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(TripDestinations $request, string $id)
+    public function update(TripDestinationRequest $request, string $id)
     {
         $tripDestination = TripDestination::findOrFail($id);
 
