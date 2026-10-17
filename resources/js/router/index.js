@@ -8,6 +8,7 @@ import AddDestination from '../components/pages/AddDestination.vue'
 import Login from '../components/pages/Login.vue'
 import Register from '../components/pages/Register.vue'
 import Profile from '../components/pages/Profile.vue'
+import TripDetails from '../components/pages/TripDetails.vue'
 import Admin from '../components/pages/Admin.vue'
 
 const routes = [
@@ -42,6 +43,12 @@ const routes = [
         path: '/profile',
         name: 'Profile',
         component: Profile,
+        meta: { access: 'auth' }
+    },
+    {
+        path: '/trips/:id',
+        name: 'TripDetails',
+        component: TripDetails,
         meta: { access: 'auth' }
     },
 

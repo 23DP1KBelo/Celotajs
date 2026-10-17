@@ -52,7 +52,15 @@
             <p v-else-if="!filteredTrips.length" class="mine__empty">{{ $t('profile.noTrips') }}</p>
             <ul v-else class="grid trip-grid">
                 <li v-for="trip in filteredTrips" :key="trip.id">
-                    <article class="card trip-card" :style="{ backgroundImage: trip.image ? `linear-gradient(transparent 45%,rgba(0,0,0,.5)),url('${trip.image}')` : 'linear-gradient(180deg,#75816c 55%,#394638)' }">
+                    <article
+                            class="card trip-card"
+                            role="link"
+                            tabindex="0"
+                            @click="$router.push(`/trips/${trip.id}`)"
+                            @keydown.enter="$router.push(`/trips/${trip.id}`)"
+                            @keydown.space.prevent="$router.push(`/trips/${trip.id}`)"
+                            :style="{ backgroundImage: trip.image ? `linear-gradient(transparent 45%,rgba(0,0,0,.5)),url('${trip.image}')` : 'linear-gradient(180deg,#75816c 55%,#394638)' }"
+                        >
                         <span class="card__badge" :class="{ 'card__badge--dark': trip.status === 'visited' }">{{ trip.status === 'visited' ? $t('common.visited') : $t('common.wantToVisit') }}</span>
                         <span class="card__name">{{ trip.title || trip.name }}</span>
                     </article>
