@@ -1,4 +1,4 @@
-```vue
+
 <template>
     <div
         v-if="modelValue"
@@ -25,9 +25,7 @@
             <template v-if="step === 'list'">
                 <p class="trip-dialog__eyebrow">MY TRAVEL PLANS</p>
 
-                <h2 id="trip-dialog-title">
-                    Choose your trip
-                </h2>
+                <h2 id="trip-dialog-title">Choose your trip</h2>
 
                 <p class="trip-dialog__description">
                     Select a trip to add this destination to.
@@ -42,10 +40,7 @@
                 </p>
 
                 <template v-else>
-                    <div
-                        v-if="trips.length"
-                        class="trip-dialog__list"
-                    >
+                    <div v-if="trips.length" class="trip-dialog__list">
                         <button
                             v-for="trip in trips"
                             :key="trip.id"
@@ -53,9 +48,11 @@
                             class="trip-dialog__trip"
                             :class="{
                                 'trip-dialog__trip--selected':
-                                    selectedTripId === trip.id
+                                    String(selectedTripId) === String(trip.id),
+                                'trip-dialog__trip--disabled':
+                                    tripContainsDestination(trip)
                             }"
-                            @click="selectedTripId = trip.id"
+                            @click="selectTrip(trip)"
                         >
                             <span class="trip-dialog__trip-info">
                                 <strong>
@@ -66,15 +63,22 @@
                                     {{ trip.description }}
                                 </small>
 
-                                <small v-if="trip.destinations">
-                                    {{ trip.destinations.length }}
+                                <small>
+                                    {{ getTripDestinations(trip).length }}
                                     destinations
+                                </small>
+
+                                <small
+                                    v-if="tripContainsDestination(trip)"
+                                    class="trip-dialog__already-added"
+                                >
+                                    Already contains this destination
                                 </small>
                             </span>
 
                             <span class="trip-dialog__radio">
                                 <span
-                                    v-if="selectedTripId === trip.id"
+                                    v-if="String(selectedTripId) === String(trip.id)"
                                 ></span>
                             </span>
                         </button>
@@ -105,10 +109,14 @@
                     <button
                         type="button"
                         class="trip-dialog__primary"
-                        :disabled="!selectedTripId || loading"
+                        :disabled="
+                            !selectedTripId ||
+                            loading ||
+                            destinationAlreadyInTrip
+                        "
                         @click="goToRecommendation"
                     >
-                        Continue
+                        {{ destinationAlreadyInTrip ? 'Already added' : 'Continue' }}
                     </button>
                 </div>
             </template>
@@ -117,9 +125,7 @@
             <template v-else-if="step === 'create'">
                 <p class="trip-dialog__eyebrow">NEW TRAVEL PLAN</p>
 
-                <h2 id="trip-dialog-title">
-                    Create a new trip
-                </h2>
+                <h2 id="trip-dialog-title">Create a new trip</h2>
 
                 <p class="trip-dialog__description">
                     Give your next adventure a name.
@@ -170,7 +176,7 @@
                         <button
                             type="button"
                             class="trip-dialog__text-button"
-                            @click="step = 'list'; error = ''"
+                            @click="backToList"
                         >
                             Back
                         </button>
@@ -190,9 +196,7 @@
             <template v-else-if="step === 'recommendation'">
                 <p class="trip-dialog__eyebrow">ALMOST THERE</p>
 
-                <h2 id="trip-dialog-title">
-                    Save your destination
-                </h2>
+                <h2 id="trip-dialog-title">Save your destination</h2>
 
                 <p class="trip-dialog__description">
                     Would you like this destination to be marked as a
@@ -201,7 +205,6 @@
 
                 <div class="trip-dialog__selected">
                     <span>SELECTED TRIP</span>
-
                     <strong>{{ selectedTripName }}</strong>
                 </div>
 
@@ -251,7 +254,7 @@
                     <button
                         type="button"
                         class="trip-dialog__text-button"
-                        @click="step = 'list'; error = ''"
+                        @click="backToList"
                     >
                         Back
                     </button>
@@ -296,7 +299,6 @@ export default {
             trips: [],
             selectedTripId: null,
             isRecommendation: null,
-
             loading: false,
             saving: false,
             error: '',
@@ -316,6 +318,14 @@ export default {
             )
 
             return trip?.title || trip?.name || 'Selected trip'
+        },
+
+        destinationAlreadyInTrip() {
+            const trip = this.trips.find(
+                item => String(item.id) === String(this.selectedTripId)
+            )
+
+            return trip ? this.tripContainsDestination(trip) : false
         }
     },
 
@@ -357,6 +367,40 @@ export default {
             }
         },
 
+        getTripDestinations(trip) {
+            return trip.trip_destinations || trip.destinations || []
+        },
+
+        tripContainsDestination(trip) {
+            const targetId = String(this.destinationId)
+
+            return this.getTripDestinations(trip).some(item => {
+                const existingId =
+                    item.destination_id ??
+                    item.destination?.id ??
+                    item.id
+
+                return existingId != null && String(existingId) === targetId
+            })
+        },
+
+        selectTrip(trip) {
+            if (this.tripContainsDestination(trip)) {
+                this.selectedTripId = trip.id
+                this.error = 'This destination is already in this trip.'
+                return
+            }
+
+            this.selectedTripId = trip.id
+            this.error = ''
+        },
+
+        backToList() {
+            this.step = 'list'
+            this.error = ''
+            this.isRecommendation = null
+        },
+
         async fetchTrips() {
             this.loading = true
             this.error = ''
@@ -373,9 +417,9 @@ export default {
                     ? data
                     : data.trips || data.data || []
 
-                // Ja API atgriež arī pagājušā galamērķa datus,
-                // šeit atlasām tikai ceļojumus ar ID.
-                this.trips = this.trips.filter(trip => trip.id != null)
+                this.trips = this.trips.filter(
+                    trip => trip.id != null
+                )
             } catch (error) {
                 console.error(
                     'Failed to load trips:',
@@ -423,7 +467,6 @@ export default {
                 const data = response.data
                 const newTrip = data.trip || data.data || data
 
-                // Pēc izveides iegūstam pilnu sarakstu no servera.
                 await this.fetchTrips()
 
                 const createdTrip = this.trips.find(
@@ -433,7 +476,14 @@ export default {
                 if (createdTrip) {
                     this.selectedTripId = createdTrip.id
                 } else if (newTrip.id != null) {
-                    this.trips.unshift(newTrip)
+                    this.trips.unshift({
+                        ...newTrip,
+                        trip_destinations:
+                            newTrip.trip_destinations ||
+                            newTrip.destinations ||
+                            []
+                    })
+
                     this.selectedTripId = newTrip.id
                 } else {
                     this.error =
@@ -442,8 +492,6 @@ export default {
                     return
                 }
 
-                // Atgriežamies pie tā paša ceļojumu saraksta,
-                // lai lietotājs var izvēlēties vajadzīgo ceļojumu.
                 this.step = 'list'
             } catch (error) {
                 console.error(
@@ -462,6 +510,12 @@ export default {
         goToRecommendation() {
             if (!this.selectedTripId) return
 
+            if (this.destinationAlreadyInTrip) {
+                this.error = 'This destination is already in this trip.'
+                this.step = 'list'
+                return
+            }
+
             this.isRecommendation = null
             this.error = ''
             this.step = 'recommendation'
@@ -473,6 +527,13 @@ export default {
                 this.isRecommendation === null ||
                 this.saving
             ) {
+                return
+            }
+
+            // Повторная проверка перед отправкой запроса.
+            if (this.destinationAlreadyInTrip) {
+                this.error = 'This destination is already in this trip.'
+                this.step = 'list'
                 return
             }
 
@@ -491,6 +552,24 @@ export default {
                         headers: this.getHeaders()
                     }
                 )
+
+                // Обновляем локальные данные, чтобы дубликат сразу
+                // блокировался, даже если диалог не закрыли.
+                const trip = this.trips.find(
+                    item => String(item.id) === String(this.selectedTripId)
+                )
+
+                if (trip) {
+                    const destinations = this.getTripDestinations(trip)
+
+                    destinations.push({
+                        destination_id: this.destinationId,
+                        recommendations: this.isRecommendation
+                    })
+
+                    trip.trip_destinations = destinations
+                    trip.destinations = destinations
+                }
 
                 this.$emit('saved', {
                     tripId: this.selectedTripId,
@@ -607,6 +686,11 @@ export default {
     background: #f8f8f6;
 }
 
+.trip-dialog__trip--disabled {
+    border-color: #ddd;
+    background: #f3f3f3;
+}
+
 .trip-dialog__trip-info {
     display: grid;
     gap: 0.4rem;
@@ -622,6 +706,10 @@ export default {
     color: #666;
     font-size: 0.75rem;
     overflow-wrap: anywhere;
+}
+
+.trip-dialog__already-added {
+    color: #b42318 !important;
 }
 
 .trip-dialog__radio {
