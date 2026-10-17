@@ -413,29 +413,51 @@ export default {
                 this.loadingTrips = false
             }
         },
+
+        
         async toggleTripStatus(trip) {
-            if (this.updatingTripId === trip.id) return
-            this.updatingTripId = trip.id
+            if (this.updatingTripId === trip.id) return;
+
+            const newStatus =
+                trip.status === 'visited' || trip.status === 'apmeklēts'
+                    ? 'unvisited'
+                    : 'visited';
+
+            this.updatingTripId = trip.id;
+
+            const payload = {
+                user_id: trip.user_id,
+                title: trip.title,
+                description: trip.description ?? '',
+                date_from: trip.date_from || trip.date_form || null,
+                date_till: trip.date_till || null,
+                budget: trip.budget ?? null,
+                status: newStatus,
+                category: trip.category || null,
+            };
+
             try {
-                const newStatus = trip.status === 'visited' ? 'unvisited' : 'visited'
-                const { data } = await axios.put(`/api/trips/${trip.id}`, {
-                    title: trip.title || trip.name,
-                    description: trip.description || '',
-                    date_from: trip.date_from || trip.date_form || null,
-                    date_till: trip.date_till || null,
-                    budget: trip.budget ?? null,
-                    category: trip.category || null,
-                    status: newStatus
-                }, this.getAuthConfig())
-                const updated = data.trip || data.data || data
-                this.trips = this.trips.map(item => String(item.id) === String(trip.id)
-                    ? { ...item, ...(updated && typeof updated === 'object' ? updated : {}), status: updated?.status || newStatus }
-                    : item)
+                const token = localStorage.getItem('token');
+
+                await axios.put(`/api/trips/${trip.id}`, payload, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                trip.status = newStatus;
             } catch (error) {
-                console.error('Failed to update trip status:', error.response?.data || error.message)
-                this.showToast(error.response?.data?.message || 'FAILED TO UPDATE TRIP STATUS')
+                const errors = error.response?.data?.errors || {};
+
+                alert(
+                    Object.values(errors).flat().join('\n') ||
+                    error.response?.data?.message ||
+                    'Failed to update trip status.'
+                );
             } finally {
-                this.updatingTripId = null
+                this.updatingTripId = null;
             }
         },
 
