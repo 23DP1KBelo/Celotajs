@@ -23,7 +23,7 @@
                     <p v-if="memberSince">{{ $t('profile.memberSince', { year: memberSince }) }}</p>
                 </div>
             </div>
-            <!-- <div class="stats">
+            <div class="stats">
                 <div>
                     <strong>{{ saved.length }}</strong>
                     <span>SAVED PLACES</span>
@@ -36,7 +36,7 @@
                     <strong>{{ countriesCount }}</strong>
                     <span>COUNTRIES</span>
                 </div>
-            </div> -->
+            </div> 
         </section>
         <section class="mine">
             <div class="mine__head">
@@ -364,15 +364,24 @@ export default {
 
             this.trips.forEach(trip => {
                 const destinations =
-                    trip.destinations || trip.trip_destinations || []
+                    trip.trip_destinations || trip.destinations || []
 
-                destinations.forEach(place => {
-                    unique.set(place.id, place)
+                destinations.forEach(item => {
+                    const destination = item.destination || item
+                    const id = destination.id || item.destination_id
+
+                    if (id) {
+                        unique.set(id, {
+                            ...destination,
+                            tripStatus: trip.status
+                        })
+                    }
                 })
             })
 
             return [...unique.values()]
         },
+
 
         filteredDestinations() {
             return this.saved.filter(place =>
@@ -391,12 +400,31 @@ export default {
         },
 
         visitedCount() {
-            return this.saved.filter(place => place.status === 'visited').length
+            return this.saved.filter(
+                destination => destination.tripStatus === 'visited'
+            ).length
         },
 
-        countriesCount() {
-            return new Set(this.saved.map(place => place.country)).size
-        }
+
+       countriesCount() {
+        const countries = new Set()
+
+        this.trips.forEach(trip => {
+            const destinations =
+                trip.trip_destinations || trip.destinations || []
+
+            destinations.forEach(item => {
+                const destination = item.destination || item
+                const country = destination.place?.country
+
+                if (country?.id) {
+                    countries.add(country.id)
+                }
+            })
+        })
+
+        return countries.size
+    }
     },
 
     async mounted() {
