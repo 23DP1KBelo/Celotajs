@@ -29,7 +29,7 @@ class TripRequest extends FormRequest
             'date_from' => 'required|date',
             'date_till' => 'required|date|after:date_from',
             'budget' => 'nullable|numeric|min:0',
-            'status' => 'required|in:unvisited, visited',
+            'status' => 'required|in:unvisited,visited',
             'category' => 'nullable|string|in:rest,nature,adventure',
             'image' => 'nullable|file|mimes:jpg,jpeg,png|max:2048'
         ];

@@ -1,13 +1,11 @@
 <template>
     <main class="profile">
         <transition name="toast">
-            <div v-if="toast" class="toast" role="status">
-                {{ toast }}
-            </div>
+            <div v-if="toast" class="toast" role="status">{{ toast }}</div>
         </transition>
         <header class="profile__hero">
-            <p>{{ $t('profile.heroText') }}</p>
-            <h1>{{ $t('profile.title') }}</h1>
+            <p>Your saved places, your visited ones, and everything about your account in one place.</p>
+            <h1>PROFILE</h1>
         </header>
         <section class="user">
             <div class="user__info">
@@ -18,9 +16,9 @@
                     </svg>
                 </div>
                 <div>
-                    <h2>{{ username || $t('common.yourName') }}</h2>
+                    <h2>{{ username || 'YOUR NAME' }}</h2>
                     <p>{{ user?.email || 'you@example.com' }}</p>
-                    <p v-if="memberSince">{{ $t('profile.memberSince', { year: memberSince }) }}</p>
+                    <p v-if="memberSince">MEMBER SINCE {{ memberSince }}</p>
                 </div>
             </div>
             <div class="stats">
@@ -36,105 +34,64 @@
                     <strong>{{ countriesCount }}</strong>
                     <span>COUNTRIES</span>
                 </div>
-            </div> 
+            </div>
         </section>
         <section class="mine">
             <div class="mine__head">
-                <h2>{{ $t('profile.myTrips') }}</h2>
+                <h2>MY TRIPS</h2>
                 <div class="mine__tools">
                     <div class="tabs" role="tablist">
-                        <button v-for="tab in tabs" :key="tab.value" type="button" role="tab" class="tabs__item" :class="{ 'tabs__item--on': filter === tab.value }" :aria-selected="filter === tab.value" @click="filter = tab.value">{{ $t(tab.label) }}</button>
+                        <button v-for="tab in tabs" :key="tab.value" type="button" role="tab" class="tabs__item" :class="{ 'tabs__item--on': filter === tab.value }" :aria-selected="filter === tab.value" @click="filter = tab.value">{{ tab.label }}</button>
                     </div>
-                    <button type="button" class="mine__add" @click="openModal">{{ $t('profile.addTrip') }}</button>
+                    <button type="button" class="mine__add" @click="openModal">+ ADD TRIP</button>
                 </div>
             </div>
-            <p v-if="loadingTrips" class="mine__empty">{{ $t('common.loading') }}</p>
-            <p v-else-if="!filteredTrips.length" class="mine__empty">{{ $t('profile.noTrips') }}</p>
+            <p v-if="loadingTrips" class="mine__empty">LOADING…</p>
+            <p v-else-if="!filteredTrips.length" class="mine__empty">NO TRIPS FOUND. CLICK “ADD TRIP” TO CREATE YOUR FIRST ONE.</p>
             <ul v-else class="grid trip-grid">
                 <li v-for="trip in filteredTrips" :key="trip.id">
-                    <article
-                            class="card trip-card"
-                            role="link"
-                            tabindex="0"
-                            @click="$router.push(`/trips/${trip.id}`)"
-                            @keydown.enter="$router.push(`/trips/${trip.id}`)"
-                            @keydown.space.prevent="$router.push(`/trips/${trip.id}`)"
-                            :style="{ backgroundImage: trip.image ? `linear-gradient(transparent 45%,rgba(0,0,0,.5)),url('${trip.image}')` : 'linear-gradient(180deg,#75816c 55%,#394638)' }"
-                        >
-                        <span class="card__badge" :class="{ 'card__badge--dark': trip.status === 'visited' }">{{ trip.status === 'visited' ? $t('common.visited') : $t('common.wantToVisit') }}</span>
+                    <article class="card trip-card" :style="{ backgroundImage: trip.image ? `linear-gradient(transparent 45%,rgba(0,0,0,.5)),url('${trip.image}')` : 'linear-gradient(180deg,#75816c 55%,#394638)' }" @click="$router.push(`/trips/${trip.id}`)">
+                        <button type="button" class="card__badge trip-status-toggle" :class="{ 'card__badge--dark': trip.status === 'visited' }" :disabled="updatingTripId === trip.id" @click.stop="toggleTripStatus(trip)">
+                            {{ updatingTripId === trip.id ? 'SAVING...' : (trip.status === 'visited' ? 'VISITED' : 'WANT TO VISIT') }}
+                        </button>
                         <span class="card__name">{{ trip.title || trip.name }}</span>
+                        <button type="button" class="trip-delete" :disabled="deletingTripId === trip.id" @click.stop="deleteTrip(trip)">
+                            {{ deletingTripId === trip.id ? 'DELETING...' : 'DELETE TRIP' }}
+                        </button>
                     </article>
                 </li>
             </ul>
         </section>
         <section class="account">
             <div class="account__intro">
-                <h2>{{ $t('profile.accountTitle') }}<br>{{ $t('profile.accountTitleEnd') }}</h2>
-                <p>{{ $t('profile.accountText') }}</p>
+                <h2>ACCOUNT<br>DETAILS</h2>
+                <p>KEEP YOUR DETAILS UP TO DATE SO YOUR LIST IS ALWAYS YOURS.</p>
             </div>
             <form class="account__form" @submit.prevent="saveChanges">
                 <label class="field">
-                    <span>{{ $t('profile.fullName') }}</span>
-                    <input
-                        :value="username"
-                        type="text"
-                        :placeholder="$t('common.yourName')"
-                        readonly
-                    >
+                    <span>FULL NAME</span>
+                    <input :value="username" type="text" placeholder="YOUR NAME" readonly>
                 </label>
                 <label class="field">
-                    <span>{{ $t('common.email') }}</span>
-                    <input
-                        v-model.trim="form.email"
-                        type="email"
-                        :placeholder="$t('common.emailPlaceholder')"
-                        autocomplete="email"
-                    >
-                    <small v-if="errors.email">
-                        {{ errors.email[0] }}
-                    </small>
+                    <span>EMAIL</span>
+                    <input v-model.trim="form.email" type="email" placeholder="YOU@EXAMPLE.COM" autocomplete="email">
+                    <small v-if="errors.email">{{ errors.email[0] }}</small>
                 </label>
                 <label class="field">
-                    <span>{{ $t('profile.newPassword') }}</span>
-                    <input
-                        v-model="form.password"
-                        type="password"
-                        :placeholder="$t('profile.newPasswordPlaceholder')"
-                        autocomplete="new-password"
-                    >
-                    <small v-if="errors.password">
-                        {{ errors.password[0] }}
-                    </small>
+                    <span>NEW PASSWORD</span>
+                    <input v-model="form.password" type="password" placeholder="**********" autocomplete="new-password">
+                    <small v-if="errors.password">{{ errors.password[0] }}</small>
                 </label>
                 <label v-if="form.password" class="field">
-                    <span>{{ $t('profile.currentPassword') }}</span>
-                    <input
-                        v-model="form.current_password"
-                        type="password"
-                        :placeholder="$t('profile.currentPassword')"
-                        autocomplete="current-password"
-                    >
-                    <small v-if="errors.current_password">
-                        {{ errors.current_password[0] }}
-                    </small>
+                    <span>CURRENT PASSWORD</span>
+                    <input v-model="form.current_password" type="password" autocomplete="current-password">
+                    <small v-if="errors.current_password">{{ errors.current_password[0] }}</small>
                 </label>
                 <div class="account__actions">
-                    <button
-                        type="submit"
-                        class="account__save"
-                        :disabled="saving"
-                    >
-                        {{ saving ? $t('common.saving') : $t('common.saveChanges') }}
+                    <button type="submit" class="account__save" :disabled="saving">
+                        {{ saving ? 'SAVING...' : 'SAVE CHANGES' }}
                     </button>
-
-                    <button
-                        type="button"
-                        class="account__delete"
-                        :disabled="saving"
-                        @click="deleteAccount"
-                    >
-                        {{ $t('profile.deleteAccount') }}
-                    </button>
+                    <button type="button" class="account__delete" @click="deleteAccount">DELETE ACCOUNT</button>
                 </div>
             </form>
         </section>
@@ -152,36 +109,36 @@
                     aria-labelledby="trip-title"
                     @submit.prevent="createTrip"
                 >
-                    <div class="trip-stepper" :aria-label="$t('profile.progress')">
+                    <div class="trip-stepper" aria-label="Trip creation progress">
                         <span v-for="number in 3" :key="number"
                               class="trip-stepper__item"
                               :class="{ 'trip-stepper__item--active': step === number, 'trip-stepper__item--done': step > number }">
                             0{{ number }}
                         </span>
                     </div>
-                    <p class="trip-form__eyebrow">{{ $t('profile.step', { step }) }}</p>
+                    <p class="trip-form__eyebrow">STEP 0{{ step }} / 03</p>
                     <h2 id="trip-title">
-                        {{ step === 1 ? $t('profile.stepDetails') : step === 2 ? $t('profile.stepDates') : $t('profile.stepReview') }}
+                        {{ step === 1 ? 'TRIP DETAILS' : step === 2 ? 'DATES & CATEGORY' : 'REVIEW & CONFIRM' }}
                     </h2>
                     <div v-if="step === 1" class="form-step">
                         <label class="field">
-                            <span>{{ $t('common.tripName') }} *</span>
+                            <span>TRIP NAME *</span>
                             <input
                                 ref="tripName"
                                 v-model.trim="tripForm.title"
                                 type="text"
                                 maxlength="255"
-                                :placeholder="$t('common.tripNamePlaceholder')"
+                                placeholder="E.G. SUMMER IN NORWAY"
                                 required
                             >
                             <small v-if="tripErrors.title">{{ tripErrors.title[0] }}</small>
                         </label>
                         <label class="field">
-                            <span>{{ $t('common.description') }}</span>
+                            <span>DESCRIPTION</span>
                             <textarea
                                 v-model.trim="tripForm.description"
                                 rows="4"
-                                :placeholder="$t('common.tripDescriptionPlaceholder')"
+                                placeholder="WHAT IS THIS TRIP ABOUT?"
                             ></textarea>
                             <small v-if="tripErrors.description">{{ tripErrors.description[0] }}</small>
                         </label>
@@ -189,12 +146,12 @@
                     <div v-else-if="step === 2" class="form-step">
                         <div class="trip-form__row">
                             <label class="field">
-                                <span>{{ $t('profile.dateFrom') }}</span>
+                                <span>DATE FROM *</span>
                                 <input v-model="tripForm.date_from" type="date" required>
                                 <small v-if="tripErrors.date_from">{{ tripErrors.date_from[0] }}</small>
                             </label>
                             <label class="field">
-                                <span>{{ $t('profile.dateTill') }}</span>
+                                <span>DATE TILL *</span>
                                 <input
                                     v-model="tripForm.date_till"
                                     type="date"
@@ -205,31 +162,31 @@
                             </label>
                         </div>
                         <label class="field">
-                            <span>{{ $t('profile.budget') }}</span>
+                            <span>BUDGET (€)</span>
                             <input
                                 v-model="tripForm.budget"
                                 type="number"
                                 min="0"
                                 step="0.01"
-                                :placeholder="$t('profile.budgetPlaceholder')"
+                                placeholder="E.G. 500"
                             >
                             <small v-if="tripErrors.budget">{{ tripErrors.budget[0] }}</small>
                         </label>
                         <label class="field">
-                            <span>{{ $t('common.status') }} *</span>
+                            <span>STATUS *</span>
                             <select v-model="tripForm.status" required>
-                                <option value="unvisited">{{ $t('common.wantToVisit') }}</option>
-                                <option value="visited">{{ $t('common.visited') }}</option>
+                                <option value="unvisited">WANT TO VISIT</option>
+                                <option value="visited">VISITED</option>
                             </select>
                             <small v-if="tripErrors.status">{{ tripErrors.status[0] }}</small>
                         </label>
                         <label class="field">
-                            <span>{{ $t('common.category') }}</span>
+                            <span>KATEGORIJA</span>
                             <select v-model="tripForm.category">
-                                <option value="">{{ $t('common.chooseCategory') }}</option>
-                                <option value="nature">{{ $t('categories.nature') }}</option>
-                                <option value="adventure">{{ $t('categories.adventure') }}</option>
-                                <option value="rest">{{ $t('categories.rest') }}</option>
+                                <option value="">IZVĒLIES KATEGORIJU</option>
+                                <option value="nature">DABA</option>
+                                <option value="adventure">IZKLAIDE</option>
+                                <option value="rest">ATPŪTA</option>
                             </select>
                             <small v-if="tripErrors.category">
                                 {{ tripErrors.category[0] }}
@@ -238,23 +195,23 @@
                     </div>
                     <div v-else class="form-step">
                         <label class="field">
-                            <span>{{ $t('profile.tripPhoto') }}</span>
+                            <span>TRIP PHOTO (JPG, PNG · MAX 2 MB)</span>
                             <input type="file" accept=".jpg,.jpeg,.png" @change="onTripImageChange">
                             <small v-if="tripErrors.image">{{ tripErrors.image[0] }}</small>
                         </label>
                         <div class="trip-review">
-                            <p class="trip-review__label">{{ $t('common.tripName') }}</p>
+                            <p class="trip-review__label">TRIP NAME</p>
                             <p class="trip-review__value">{{ tripForm.title || '—' }}</p>
-                            <p class="trip-review__label">{{ $t('profile.dates') }}</p>
+                            <p class="trip-review__label">DATES</p>
                             <p class="trip-review__value">
                                 {{ tripForm.date_from || '—' }} — {{ tripForm.date_till || '—' }}
                             </p>
-                            <p class="trip-review__label">{{ $t('profile.budgetLabel') }}</p>
+                            <p class="trip-review__label">BUDGET</p>
                             <p class="trip-review__value">
-                                {{ tripForm.budget !== '' ? `€${tripForm.budget}` : $t('common.notSpecified') }}
+                                {{ tripForm.budget !== '' ? `€${tripForm.budget}` : 'Not specified' }}
                             </p>
-                            <p class="trip-review__label">{{ $t('common.category') }}</p>
-                            <p class="trip-review__value">{{ tripForm.category ? $t(`categories.${tripForm.category}`) : $t('common.notSpecified') }}</p>
+                            <p class="trip-review__label">CATEGORY</p>
+                            <p class="trip-review__value">{{ tripForm.category ? tripForm.category.toUpperCase() : 'Not specified' }}</p>
                         </div>
                         <p v-if="tripErrors.user_id" class="field__error">
                             {{ tripErrors.user_id[0] }}
@@ -270,14 +227,14 @@
                             class="trip-form__back"
                             @click="step--"
                         >
-                            {{ $t('profile.back') }}
+                            ← BACK
                         </button>
                         <button
                             type="button"
                             class="trip-form__cancel"
                             @click="closeModal"
                         >
-                            {{ $t('common.cancel') }}
+                            CANCEL
                         </button>
                         <button
                             v-if="step < 3"
@@ -285,7 +242,7 @@
                             class="account__save"
                             @click="nextTripStep"
                         >
-                            {{ $t('profile.continue') }}
+                            CONTINUE →
                         </button>
                         <button
                             v-else
@@ -293,7 +250,7 @@
                             class="account__save"
                             :disabled="creating"
                         >
-                            {{ creating ? $t('common.saving') : $t('profile.confirm') }}
+                            {{ creating ? 'SAVING...' : 'CONFIRM' }}
                         </button>
                     </div>
                 </form>
@@ -301,23 +258,23 @@
         </transition>
     </main>
 </template>
-
 <script>
 import axios from 'axios'
 import { auth, fetchUser } from '../../auth.js'
-
 export default {
     data() {
         return {
             user: auth.user,
             filter: 'all',
             tabs: [
-                { value: 'all', label: 'common.all' },
-                { value: 'unvisited', label: 'common.wantToVisit' },
-                { value: 'visited', label: 'common.visited' }
+                { value: 'all', label: 'ALL' },
+                { value: 'unvisited', label: 'WANT TO VISIT' },
+                { value: 'visited', label: 'VISITED' }
             ],
             trips: [],
             loadingTrips: true,
+            updatingTripId: null,
+            deletingTripId: null,
             modal: false,
             creating: false,
             step: 1,
@@ -328,7 +285,7 @@ export default {
                 date_till: '',
                 budget: '',
                 status: 'unvisited',
-                category: ''
+                category: '',
             },
             tripImage: null,
             tripErrors: {},
@@ -343,22 +300,19 @@ export default {
             toastTimer: null
         }
     },
-
     computed: {
         username() {
-            return this.user?.username || this.user?.Username || ''
+            return this.user?.username
+                || this.user?.Username
+                || ''
         },
-
         memberSince() {
             if (!this.user?.created_at) return ''
-
             const date = new Date(this.user.created_at)
-
             return Number.isNaN(date.getTime())
                 ? ''
                 : date.getFullYear()
         },
-
         saved() {
             const unique = new Map()
 
@@ -381,137 +335,155 @@ export default {
 
             return [...unique.values()]
         },
-
-
         filteredDestinations() {
-            return this.saved.filter(place =>
-                this.filter === 'all' ||
-                place.status === this.filter ||
-                (this.filter === 'unvisited' && place.status === 'not_visited')
-            )
+            return this.saved.filter(place => this.filter === 'all' || place.status === this.filter || (this.filter === 'unvisited' && place.status === 'not_visited'))
         },
-
         filteredTrips() {
-            return this.trips.filter(trip =>
-                this.filter === 'all' ||
-                trip.status === this.filter ||
-                (this.filter === 'unvisited' && trip.status === 'not_visited')
-            )
+            return this.trips.filter(trip => this.filter === 'all' || trip.status === this.filter || (this.filter === 'unvisited' && trip.status === 'not_visited'))
         },
-
-        visitedCount() {
+       visitedCount() {
             return this.saved.filter(
                 destination => destination.tripStatus === 'visited'
             ).length
         },
 
+        countriesCount() {
+            const countries = new Set()
 
-       countriesCount() {
-        const countries = new Set()
+            this.trips.forEach(trip => {
+                const destinations =
+                    trip.trip_destinations || trip.destinations || []
 
-        this.trips.forEach(trip => {
-            const destinations =
-                trip.trip_destinations || trip.destinations || []
+                destinations.forEach(item => {
+                    const destination = item.destination || item
+                    const country = destination.place?.country
 
-            destinations.forEach(item => {
-                const destination = item.destination || item
-                const country = destination.place?.country
-
-                if (country?.id) {
-                    countries.add(country.id)
-                }
+                    if (country?.id) {
+                        countries.add(country.id)
+                    }
+                })
             })
-        })
 
-        return countries.size
-    }
+            return countries.size
+        },
     },
-
     async mounted() {
-        try {
-            await fetchUser()
-            this.user = auth.user
-
-            if (!this.user) {
-                await this.$router.push('/login')
-                return
-            }
-
-            this.form.email = this.user.email || ''
-            await this.loadTrips()
-        } catch (error) {
-            console.error('Failed to load profile:', error)
-            this.showToast(this.$t('profile.loadFailed'))
+        await fetchUser()
+        this.user = auth.user
+        if (!this.user) {
+            await this.$router.push('/login')
+            return
+        }
+        this.form.email = this.user.email || ''
+        await this.loadTrips()
+    },
+    methods: {
+       getAuthConfig() {
+        const token = localStorage.getItem('token')
+        if (!token) throw new Error('AUTH_REQUIRED')
+        return {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: 'application/json',
+            },
         }
     },
-
-    methods: {
-        getAuthConfig() {
-            const token = localStorage.getItem('token')
-
-            if (!token) {
-                throw new Error('AUTH_REQUIRED')
-            }
-
-            return {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    Accept: 'application/json'
-                }
-            }
-        },
-
+        onTripImageChange(event) {
+        this.tripImage = event.target.files[0] || null
+        delete this.tripErrors.image
+        if (this.tripImage && this.tripImage.size > 2 * 1024 * 1024) {
+        this.tripImage = null
+        event.target.value = ''
+        this.tripErrors = {
+            ...this.tripErrors,
+            image: ['The image must not exceed 2 MB.'],
+        }
+    }
+},
         async loadTrips() {
             this.loadingTrips = true
-
             try {
-                const { data } = await axios.get(
-                    '/api/user/trips',
-                    this.getAuthConfig()
-                )
-
-                const list = Array.isArray(data)
-                    ? data
-                    : Array.isArray(data.data)
-                        ? data.data
-                        : data.trips || []
-
-                this.trips = list.map(trip => ({
-                    ...trip,
-                    date_from: trip.date_from || trip.date_form || '',
-                    destinations:
-                        trip.destinations || trip.trip_destinations || []
-                }))
+                const { data } = await axios.get('/api/user/trips', this.getAuthConfig())
+                const list = Array.isArray(data) ? data : (Array.isArray(data.data) ? data.data : (data.trips || []))
+                this.trips = list.map(trip => ({ ...trip, date_from: trip.date_from || trip.date_form || '', destinations: trip.destinations || trip.trip_destinations || [] }))
             } catch (error) {
-                console.error(
-                    'Failed to load trips:',
-                    error.response?.data || error.message
-                )
-
-                if (
-                    error.message === 'AUTH_REQUIRED' ||
-                    error.response?.status === 401
-                ) {
-                    this.showToast(this.$t('common.pleaseLogInAgain'))
-                } else {
-                    this.showToast(this.$t('profile.tripsFailed'))
-                }
+                console.error('Failed to load trips:', error.response?.data || error.message)
+                this.showToast('FAILED TO LOAD TRIPS')
             } finally {
                 this.loadingTrips = false
             }
         },
 
+        
+        async toggleTripStatus(trip) {
+            if (this.updatingTripId === trip.id) return;
+
+            const newStatus =
+                trip.status === 'visited' || trip.status === 'apmeklēts'
+                    ? 'unvisited'
+                    : 'visited';
+
+            this.updatingTripId = trip.id;
+
+            const payload = {
+                user_id: trip.user_id,
+                title: trip.title,
+                description: trip.description ?? '',
+                date_from: trip.date_from || trip.date_form || null,
+                date_till: trip.date_till || null,
+                budget: trip.budget ?? null,
+                status: newStatus,
+                category: trip.category || null,
+            };
+
+            try {
+                const token = localStorage.getItem('token');
+
+                await axios.put(`/api/trips/${trip.id}`, payload, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                trip.status = newStatus;
+            } catch (error) {
+                const errors = error.response?.data?.errors || {};
+
+                alert(
+                    Object.values(errors).flat().join('\n') ||
+                    error.response?.data?.message ||
+                    'Failed to update trip status.'
+                );
+            } finally {
+                this.updatingTripId = null;
+            }
+        },
+
+        async deleteTrip(trip) {
+            if (this.deletingTripId === trip.id) return
+            if (!window.confirm(`Delete trip "${trip.title || trip.name || 'this trip'}"? This cannot be undone.`)) return
+            this.deletingTripId = trip.id
+            try {
+                await axios.delete(`/api/trips/${trip.id}`, this.getAuthConfig())
+                this.trips = this.trips.filter(item => String(item.id) !== String(trip.id))
+                this.showToast('TRIP DELETED')
+            } catch (error) {
+                console.error('Failed to delete trip:', error.response?.data || error.message)
+                this.showToast(error.response?.data?.message || 'FAILED TO DELETE TRIP')
+            } finally {
+                this.deletingTripId = null
+            }
+        },
+
         visibleDestinations(trip) {
             const places = trip.destinations || []
-
             return this.filter === 'all'
                 ? places
                 : places.filter(place => place.status === this.filter)
         },
-
-        openModal() {
-            this.step = 1
-
+       openModal() {
             this.tripForm = {
                 title: '',
                 description: '',
@@ -519,299 +491,183 @@ export default {
                 date_till: '',
                 budget: '',
                 status: 'unvisited',
-                category: ''
+                category: '',
             }
-
             this.tripImage = null
             this.tripErrors = {}
             this.modal = true
-
-            this.$nextTick(() => {
-                this.$refs.tripName?.focus()
-            })
+            this.$nextTick(() => this.$refs.tripName?.focus())
         },
-
         closeModal() {
             this.modal = false
         },
-
-        onTripImageChange(event) {
-            const file = event.target.files?.[0] || null
-
-            delete this.tripErrors.image
-            this.tripImage = null
-
-            if (!file) return
-
-            const allowedTypes = ['image/jpeg', 'image/png']
-
-            if (!allowedTypes.includes(file.type)) {
-                event.target.value = ''
-                this.tripErrors.image = [
-                    this.$t('profile.imageType')
-                ]
-                return
+async nextTripStep() {
+    this.tripErrors = {}
+    if (this.step === 1) {
+        if (!this.tripForm.title.trim()) {
+            this.tripErrors.title = ['This field is required.']
+            return
+        }
+    }
+    if (this.step === 2) {
+        if (!this.tripForm.date_from) {
+            this.tripErrors.date_from = ['Please select a start date.']
+            return
+        }
+        if (!this.tripForm.date_till) {
+            this.tripErrors.date_till = ['Please select an end date.']
+            return
+        }
+        if (this.tripForm.date_till <= this.tripForm.date_from) {
+            this.tripErrors.date_till = ['The end date must be after the start date.']
+            return
+        }
+        if (this.tripForm.budget !== '' && Number(this.tripForm.budget) < 0) {
+            this.tripErrors.budget = ['Budget must be zero or greater.']
+            return
+        }
+    }
+    this.step += 1
+},
+async createTrip() {
+    if (this.creating) return
+    this.creating = true
+    this.tripErrors = {}
+    try {
+        const data = new FormData()
+        data.append('user_id', String(this.user.id))
+        Object.entries(this.tripForm).forEach(([key, value]) => {
+            if (value !== '' && value !== null && value !== undefined) {
+                data.append(key, String(value))
             }
-
-            if (file.size > 2 * 1024 * 1024) {
-                event.target.value = ''
-                this.tripErrors.image = [
-                    this.$t('profile.imageSize')
-                ]
-                return
-            }
-
-            this.tripImage = file
-        },
-
-        nextTripStep() {
-            this.tripErrors = {}
-
-            if (this.step === 1) {
-                if (!this.tripForm.title.trim()) {
-                    this.tripErrors.title = [
-                        this.$t('profile.titleRequired')
-                    ]
-                    return
-                }
-
-                this.step = 2
-                return
-            }
-
-            if (this.step === 2) {
-                if (!this.tripForm.date_from) {
-                    this.tripErrors.date_from = [
-                        this.$t('profile.dateFromRequired')
-                    ]
-                    return
-                }
-
-                if (!this.tripForm.date_till) {
-                    this.tripErrors.date_till = [
-                        this.$t('profile.dateTillRequired')
-                    ]
-                    return
-                }
-
-                if (this.tripForm.date_till <= this.tripForm.date_from) {
-                    this.tripErrors.date_till = [
-                        this.$t('profile.dateOrder')
-                    ]
-                    return
-                }
-
-                if (
-                    this.tripForm.budget !== '' &&
-                    Number(this.tripForm.budget) < 0
-                ) {
-                    this.tripErrors.budget = [
-                        this.$t('profile.budgetNegative')
-                    ]
-                    return
-                }
-
-                this.step = 3
-            }
-        },
-
-        async createTrip() {
-            if (this.creating) return
-
-            this.creating = true
-            this.tripErrors = {}
-
-            try {
-                const formData = new FormData()
-
-                // Saglabāts saderībai ar pašreizējo backend validāciju.
-                // Drošāk ir user_id noteikt Laravel kontrolierī.
-                formData.append('user_id', String(this.user.id))
-
-                Object.entries(this.tripForm).forEach(([key, value]) => {
-                    if (value !== '' && value !== null && value !== undefined) {
-                        formData.append(key, String(value))
-                    }
-                })
-
-                if (this.tripImage) {
-                    formData.append('image', this.tripImage)
-                }
-
-                const response = await axios.post(
-                    '/api/trips',
-                    formData,
-                    this.getAuthConfig()
-                )
-
-                console.log('Trip created:', response.data)
-
-                this.closeModal()
-                this.step = 1
-
-                this.tripForm = {
-                    title: '',
-                    description: '',
-                    date_from: '',
-                    date_till: '',
-                    budget: '',
-                    status: 'unvisited',
-                    category: ''
-                }
-
-                this.tripImage = null
-
-                await this.loadTrips()
-                this.showToast(this.$t('profile.tripCreated'))
-            } catch (error) {
-                console.error(
-                    'Failed to create trip:',
-                    error.response?.data || error.message
-                )
-
-                if (
-                    error.message === 'AUTH_REQUIRED' ||
-                    error.response?.status === 401
-                ) {
-                    this.showToast(this.$t('common.pleaseLogInAgain'))
-                    return
-                }
-
-                this.tripErrors = error.response?.data?.errors || {}
-
-                this.tripErrors.general = [
-                    error.response?.data?.message ||
-                    this.$t('profile.createFailed')
-                ]
-
-                this.step = 3
-            } finally {
-                this.creating = false
-            }
-        },
-
-        async saveChanges() {
+        })
+        if (this.tripImage) {
+            data.append('image', this.tripImage)
+        }
+        const response = await axios.post('/api/trips', data, {
+            ...this.getAuthConfig(),
+        })
+        console.log('Trip created:', response.data)
+        this.closeModal()
+        this.step = 1
+        this.tripForm = {
+            title: '',
+            description: '',
+            date_from: '',
+            date_till: '',
+            budget: '',
+            status: 'unvisited',
+            category: '',
+        }
+        this.tripImage = null
+        await this.loadTrips()
+        this.showToast('TRIP CREATED')
+    } catch (error) {
+        console.error(
+            'Failed to create trip:',
+            error.response?.data || error.message
+        )
+        this.tripErrors = error.response?.data?.errors || {}
+        if (error.response?.status === 401) {
+            this.showToast('PLEASE LOG IN AGAIN')
+        } else {
+            this.tripErrors.general = [
+                error.response?.data?.message || 'Could not create trip.',
+            ]
+            this.step = 3
+        }
+    } finally {
+        this.creating = false
+    }
+},
+async saveChanges() {
             if (this.saving) return
-
-            this.saving = true
             this.errors = {}
-
+            this.saving = true
             try {
-                const config = this.getAuthConfig()
-
                 if (
-                    this.form.email &&
                     this.form.email !== this.user?.email
+                    && this.form.email
                 ) {
                     const { data } = await axios.put(
                         '/api/profile/email',
-                        { email: this.form.email },
-                        config
+                        {
+                            email: this.form.email
+                        },
+                        {
+                            withCredentials: true
+                        }
                     )
-
                     if (data.user) {
                         this.user = data.user
-                        auth.user = data.user
                     } else if (this.user) {
                         this.user.email = this.form.email
                     }
-
-                    this.form.email = this.user?.email || ''
                 }
                 if (this.form.password) {
                     await axios.put(
                         '/api/profile/password',
                         {
-                            current_password: this.form.current_password,
+                            current_password:
+                                this.form.current_password,
                             password: this.form.password,
-                            password_confirmation: this.form.password
+                            password_confirmation:
+                                this.form.password
                         },
-                        config
+                        {
+                            withCredentials: true
+                        }
                     )
-
                     this.form.password = ''
                     this.form.current_password = ''
                 }
-
-                this.showToast(this.$t('profile.changesSaved'))
+                this.showToast('CHANGES SAVED')
             } catch (error) {
                 console.error(
-                    'Failed to save changes:',
+                    'Neizdevās saglabāt izmaiņas:',
                     error.response?.data || error.message
                 )
-
-                if (
-                    error.message === 'AUTH_REQUIRED' ||
-                    error.response?.status === 401
-                ) {
-                    this.showToast(this.$t('common.pleaseLogInAgain'))
-                    await this.$router.push('/login')
-                    return
-                }
-
-                this.errors = error.response?.data?.errors || {}
-
-                if (error.response?.status === 422) {
-                    this.showToast(this.$t('profile.checkDetails'))
-                } else {
-                    this.showToast(this.$t('profile.saveFailed'))
+                this.errors =
+                    error.response?.data?.errors || {}
+                if (error.response?.status === 401) {
+                    this.showToast('PLEASE LOG IN AGAIN')
+                } else if (Object.keys(this.errors).length === 0) {
+                    this.showToast('FAILED TO SAVE CHANGES')
                 }
             } finally {
                 this.saving = false
             }
         },
-
         async deleteAccount() {
             const confirmed = window.confirm(
-                this.$t('profile.deleteConfirm')
+                'Delete your account? This cannot be undone.'
             )
-
             if (!confirmed) return
-
             try {
-                await axios.delete(
-                    '/api/profile',
-                    this.getAuthConfig()
-                )
-
-                localStorage.removeItem('token')
-                localStorage.removeItem('user')
-
+                await axios.delete('/api/profile', {
+                    withCredentials: true
+                })
                 auth.user = null
-                this.user = null
-
                 await this.$router.push('/')
             } catch (error) {
                 console.error(
-                    'Failed to delete account:',
+                    'Neizdevās dzēst kontu:',
                     error.response?.data || error.message
                 )
-
-                if (
-                    error.message === 'AUTH_REQUIRED' ||
-                    error.response?.status === 401
-                ) {
-                    this.showToast(this.$t('common.pleaseLogInAgain'))
-                } else {
-                    this.showToast(this.$t('profile.deleteFailed'))
-                }
+                this.showToast('FAILED TO DELETE ACCOUNT')
             }
         },
-
         showToast(message) {
             this.toast = message
-
             if (this.toastTimer) {
                 clearTimeout(this.toastTimer)
             }
-
             this.toastTimer = setTimeout(() => {
                 this.toast = ''
                 this.toastTimer = null
             }, 2500)
         }
     },
-
     beforeUnmount() {
         if (this.toastTimer) {
             clearTimeout(this.toastTimer)
@@ -819,7 +675,6 @@ export default {
     }
 }
 </script>
-
 <style scoped>
 @import url('https\\://fonts.googleapis.com/css2?family=Italiana&family=Jost:wght@300;400&display=swap');
 .profile {
@@ -1052,12 +907,35 @@ export default {
     list-style: none;
 }
 .trip-card {
+    cursor: pointer;
     height: 15rem;
     padding: 0.75rem;
     border-radius: 1rem;
     background-position: center;
     background-size: cover;
 }
+.trip-status-toggle {
+    border: 0;
+    cursor: pointer;
+    z-index: 2;
+    font: inherit;
+}
+.trip-status-toggle:disabled { opacity: .7; cursor: wait; }
+.trip-delete {
+    position: absolute;
+    right: .75rem;
+    bottom: .75rem;
+    z-index: 2;
+    border: 1px solid rgba(255,255,255,.8);
+    border-radius: 999px;
+    padding: .35rem .65rem;
+    background: rgba(0,0,0,.35);
+    color: #fff;
+    font: inherit;
+    font-size: .65rem;
+    cursor: pointer;
+}
+.trip-delete:disabled { opacity: .6; cursor: wait; }
 .trip-card .card__name {
     z-index: 1;
 }
@@ -1126,7 +1004,7 @@ export default {
     }
 }
 
-/* Account */
+/* ---------- Account details ---------- */
 .account {
     display: flex;
     flex-wrap: wrap;
