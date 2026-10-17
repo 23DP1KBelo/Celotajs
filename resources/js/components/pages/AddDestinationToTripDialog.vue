@@ -123,74 +123,194 @@
 
             <!-- 2. Jauna ceļojuma izveide -->
             <template v-else-if="step === 'create'">
-                <p class="trip-dialog__eyebrow">NEW TRAVEL PLAN</p>
+    <p class="trip-dialog__eyebrow">NEW TRAVEL PLAN</p>
 
-                <h2 id="trip-dialog-title">Create a new trip</h2>
+    <h2 id="trip-dialog-title">Create a new trip</h2>
 
-                <p class="trip-dialog__description">
-                    Give your next adventure a name.
-                </p>
+    <p class="trip-dialog__description">
+        Fill in the details of your next adventure.
+    </p>
 
-                <form
-                    class="trip-dialog__form"
-                    @submit.prevent="createTrip"
+    <form
+        class="trip-dialog__form"
+        @submit.prevent="createTrip"
+    >
+        <!-- STEP 1: NAME AND DESCRIPTION -->
+        <div v-if="createStep === 1" class="form-step">
+            <label class="field">
+                <span>TRIP NAME *</span>
+
+                <input
+                    v-model.trim="form.title"
+                    type="text"
+                    maxlength="255"
+                    placeholder="E.G. SUMMER IN NORWAY"
+                    required
                 >
-                    <label for="trip-title">Trip name</label>
+
+                <small v-if="tripErrors.title">
+                    {{ tripErrors.title[0] }}
+                </small>
+            </label>
+
+            <label class="field">
+                <span>DESCRIPTION</span>
+
+                <textarea
+                    v-model.trim="form.description"
+                    rows="4"
+                    placeholder="WHAT IS THIS TRIP ABOUT?"
+                ></textarea>
+
+                <small v-if="tripErrors.description">
+                    {{ tripErrors.description[0] }}
+                </small>
+            </label>
+        </div>
+
+        <!-- STEP 2: DATES, BUDGET, STATUS AND CATEGORY -->
+        <div v-else-if="createStep === 2" class="form-step">
+            <div class="trip-form__row">
+                <label class="field">
+                    <span>DATE FROM *</span>
 
                     <input
-                        id="trip-title"
-                        v-model.trim="form.title"
-                        type="text"
-                        placeholder="e.g. Summer in Italy"
-                        maxlength="150"
+                        v-model="form.date_from"
+                        type="date"
                         required
                     >
 
-                    <label for="trip-description">
-                        Description (optional)
-                    </label>
+                    <small v-if="tripErrors.date_from">
+                        {{ tripErrors.date_from[0] }}
+                    </small>
+                </label>
 
-                    <textarea
-                        id="trip-description"
-                        v-model.trim="form.description"
-                        placeholder="What is this trip about?"
-                        rows="3"
-                    ></textarea>
-
-                    <label for="trip-category">
-                        Category (optional)
-                    </label>
+                <label class="field">
+                    <span>DATE TILL *</span>
 
                     <input
-                        id="trip-category"
-                        v-model.trim="form.category"
-                        type="text"
-                        placeholder="e.g. Adventure"
+                        v-model="form.date_till"
+                        type="date"
+                        :min="form.date_from || undefined"
+                        required
                     >
 
-                    <p v-if="error" class="trip-dialog__error">
-                        {{ error }}
-                    </p>
+                    <small v-if="tripErrors.date_till">
+                        {{ tripErrors.date_till[0] }}
+                    </small>
+                </label>
+            </div>
 
-                    <div class="trip-dialog__actions">
-                        <button
-                            type="button"
-                            class="trip-dialog__text-button"
-                            @click="backToList"
-                        >
-                            Back
-                        </button>
+            <label class="field">
+                <span>BUDGET (€)</span>
 
-                        <button
-                            type="submit"
-                            class="trip-dialog__primary"
-                            :disabled="saving || !form.title"
-                        >
-                            {{ saving ? 'Creating...' : 'Create trip' }}
-                        </button>
-                    </div>
-                </form>
-            </template>
+                <input
+                    v-model="form.budget"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="E.G. 500"
+                >
+
+                <small v-if="tripErrors.budget">
+                    {{ tripErrors.budget[0] }}
+                </small>
+            </label>
+
+            <label class="field">
+                <span>STATUS *</span>
+
+                <select v-model="form.status" required>
+                    <option value="unvisited">WANT TO VISIT</option>
+                    <option value="visited">VISITED</option>
+                </select>
+
+                <small v-if="tripErrors.status">
+                    {{ tripErrors.status[0] }}
+                </small>
+            </label>
+
+            <label class="field">
+                <span>KATEGORIJA</span>
+
+                <select v-model="form.category">
+                    <option value="">IZVĒLIES KATEGORIJU</option>
+                    <option value="nature">DABA</option>
+                    <option value="adventure">IZKLAIDE</option>
+                    <option value="rest">ATPŪTA</option>
+                </select>
+
+                <small v-if="tripErrors.category">
+                    {{ tripErrors.category[0] }}
+                </small>
+            </label>
+        </div>
+
+        <!-- STEP 3: PHOTO -->
+        <div v-else class="form-step">
+            <label class="field">
+                <span>TRIP PHOTO (JPG, PNG · MAX 2 MB)</span>
+
+                <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png"
+                    @change="onTripImageChange"
+                >
+
+                <small v-if="tripErrors.image">
+                    {{ tripErrors.image[0] }}
+                </small>
+            </label>
+
+            <p v-if="form.image" class="trip-dialog__message">
+                Selected file: {{ form.image.name }}
+            </p>
+        </div>
+
+        <p v-if="error" class="trip-dialog__error">
+            {{ error }}
+        </p>
+
+        <div class="trip-dialog__actions">
+            <button
+                v-if="createStep === 1"
+                type="button"
+                class="trip-dialog__text-button"
+                @click="backToList"
+            >
+                Back
+            </button>
+
+            <button
+                v-else
+                type="button"
+                class="trip-dialog__text-button"
+                @click="previousCreateStep"
+            >
+                Back
+            </button>
+
+            <button
+                v-if="createStep < 3"
+                type="button"
+                class="trip-dialog__primary"
+                :disabled="!canContinueCreate"
+                @click="nextCreateStep"
+            >
+                Continue
+            </button>
+
+            <button
+                v-else
+                type="submit"
+                class="trip-dialog__primary"
+                :disabled="saving || !form.title"
+            >
+                {{ saving ? 'Creating...' : 'Create trip' }}
+            </button>
+        </div>
+    </form>
+</template>
 
             <!-- 3. Vai galamērķi pievienot kā rekomendāciju -->
             <template v-else-if="step === 'recommendation'">
@@ -302,11 +422,18 @@ export default {
             loading: false,
             saving: false,
             error: '',
+            createStep: 1,
+            tripErrors: {},
 
             form: {
                 title: '',
                 description: '',
-                category: ''
+                date_from: '',
+                date_till: '',
+                budget: '',
+                status: 'unvisited',
+                category: '',
+                image: null,
             }
         }
     },
@@ -326,7 +453,23 @@ export default {
             )
 
             return trip ? this.tripContainsDestination(trip) : false
-        }
+        },
+
+        canContinueCreate() {
+            if (this.createStep === 1) {
+                return Boolean(this.form.title.trim());
+            }
+
+            if (this.createStep === 2) {
+                return Boolean(
+                    this.form.date_from &&
+                    this.form.date_till &&
+                    this.form.date_till >= this.form.date_from
+                );
+            }
+
+            return true;
+        },
     },
 
     watch: {
@@ -366,6 +509,62 @@ export default {
                 category: ''
             }
         },
+
+        nextCreateStep() {
+    if (!this.canContinueCreate || this.createStep >= 3) {
+        return;
+    }
+
+    this.error = '';
+    this.tripErrors = {};
+    this.createStep++;
+},
+
+previousCreateStep() {
+    if (this.createStep > 1) {
+        this.createStep--;
+        this.error = '';
+        this.tripErrors = {};
+    }
+},
+
+onTripImageChange(event) {
+    const file = event.target.files?.[0] || null;
+
+    this.tripErrors = {
+        ...this.tripErrors,
+        image: [],
+    };
+
+    if (!file) {
+        this.form.image = null;
+        return;
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png'];
+
+    if (!allowedTypes.includes(file.type)) {
+        this.tripErrors.image = [
+            'Please select a JPG or PNG image.',
+        ];
+
+        event.target.value = '';
+        this.form.image = null;
+        return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+        this.tripErrors.image = [
+            'The image must not exceed 2 MB.',
+        ];
+
+        event.target.value = '';
+        this.form.image = null;
+        return;
+    }
+
+    this.form.image = file;
+},
 
         getTripDestinations(trip) {
             return trip.trip_destinations || trip.destinations || []
@@ -434,78 +633,107 @@ export default {
             }
         },
 
-        openCreateForm() {
+       openCreateForm() {
             this.form = {
                 title: '',
                 description: '',
-                category: ''
-            }
+                date_from: '',
+                date_till: '',
+                budget: '',
+                status: 'unvisited',
+                category: '',
+                image: null,
+            };
 
-            this.error = ''
-            this.step = 'create'
+            this.createStep = 1;
+            this.tripErrors = {};
+            this.error = '';
+            this.step = 'create';
         },
 
         async createTrip() {
-            if (!this.form.title || this.saving) return
+    if (this.saving || !this.form.title.trim()) {
+        return;
+    }
 
-            this.saving = true
-            this.error = ''
+    this.saving = true;
+    this.error = '';
+    this.tripErrors = {};
 
-            try {
-                const payload = {
-                    title: this.form.title,
-                    description: this.form.description || null,
-                    category: this.form.category || null
-                }
+    try {
+        const payload = new FormData();
 
-                const response = await axios.post(
-                    '/api/trips',
-                    payload,
-                    { headers: this.getHeaders() }
-                )
+        payload.append('title', this.form.title.trim());
+        payload.append(
+            'description',
+            this.form.description || ''
+        );
+        payload.append('date_from', this.form.date_from);
+        payload.append('date_till', this.form.date_till);
+        payload.append('status', this.form.status);
+        payload.append('category', this.form.category || '');
 
-                const data = response.data
-                const newTrip = data.trip || data.data || data
+        if (this.form.budget !== '') {
+            payload.append('budget', this.form.budget);
+        }
 
-                await this.fetchTrips()
+        if (this.form.image) {
+            payload.append('image', this.form.image);
+        }
 
-                const createdTrip = this.trips.find(
-                    trip => String(trip.id) === String(newTrip.id)
-                )
-
-                if (createdTrip) {
-                    this.selectedTripId = createdTrip.id
-                } else if (newTrip.id != null) {
-                    this.trips.unshift({
-                        ...newTrip,
-                        trip_destinations:
-                            newTrip.trip_destinations ||
-                            newTrip.destinations ||
-                            []
-                    })
-
-                    this.selectedTripId = newTrip.id
-                } else {
-                    this.error =
-                        'Trip was created, but its ID was not returned.'
-                    this.step = 'list'
-                    return
-                }
-
-                this.step = 'list'
-            } catch (error) {
-                console.error(
-                    'Failed to create trip:',
-                    error.response?.data || error.message
-                )
-
-                this.error =
-                    error.response?.data?.message ||
-                    'Could not create the trip. Please check the form.'
-            } finally {
-                this.saving = false
+        const response = await axios.post(
+            '/api/trips',
+            payload,
+            {
+                headers: this.getHeaders(),
             }
-        },
+        );
+
+        const data = response.data;
+        const newTrip = data.trip || data.data || data;
+
+        await this.fetchTrips();
+
+        const createdTrip = this.trips.find(
+            trip => String(trip.id) === String(newTrip.id)
+        );
+
+        if (createdTrip) {
+            this.selectedTripId = createdTrip.id;
+        } else if (newTrip.id != null) {
+            this.trips.unshift({
+                ...newTrip,
+                trip_destinations:
+                    newTrip.trip_destinations ||
+                    newTrip.destinations ||
+                    [],
+            });
+
+            this.selectedTripId = newTrip.id;
+        } else {
+            this.error =
+                'Trip was created, but its ID was not returned.';
+            return;
+        }
+
+        this.step = 'list';
+        this.createStep = 1;
+    } catch (error) {
+        console.error(
+            'Failed to create trip:',
+            error.response?.data || error.message
+        );
+
+        this.tripErrors = error.response?.data?.errors || {};
+
+        this.error =
+            error.response?.data?.message ||
+            Object.values(this.tripErrors).flat().join(' ') ||
+            'Could not create the trip. Please check the form.';
+    } finally {
+        this.saving = false;
+    }
+},
 
         goToRecommendation() {
             if (!this.selectedTripId) return
@@ -530,7 +758,7 @@ export default {
                 return
             }
 
-            // Повторная проверка перед отправкой запроса.
+        
             if (this.destinationAlreadyInTrip) {
                 this.error = 'This destination is already in this trip.'
                 this.step = 'list'
@@ -553,8 +781,7 @@ export default {
                     }
                 )
 
-                // Обновляем локальные данные, чтобы дубликат сразу
-                // блокировался, даже если диалог не закрыли.
+                
                 const trip = this.trips.find(
                     item => String(item.id) === String(this.selectedTripId)
                 )
@@ -885,6 +1112,55 @@ export default {
     line-height: 1.5;
 }
 
+.form-step {
+    display: grid;
+    gap: 1.2rem;
+}
+
+.field {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.field span {
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+}
+
+.field input,
+.field textarea,
+.field select {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.9rem 1rem;
+    border: 1px solid #ccc;
+    border-radius: 0;
+    background: #fff;
+    color: #000;
+    font: inherit;
+    font-size: 0.9rem;
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+    outline: 1px solid #000;
+    border-color: #000;
+}
+
+.field small {
+    color: #b42318;
+    font-size: 0.75rem;
+}
+
+.trip-form__row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+
+
 @media (max-width: 500px) {
     .trip-dialog {
         padding: 2.5rem 1.25rem 1.5rem;
@@ -893,7 +1169,10 @@ export default {
     .trip-dialog__actions {
         gap: 0.6rem;
     }
-
+ 
+    .trip-form__row {
+        grid-template-columns: 1fr;
+    }
     .trip-dialog__primary,
     .trip-dialog__text-button {
         padding: 0.8rem 1.1rem;
