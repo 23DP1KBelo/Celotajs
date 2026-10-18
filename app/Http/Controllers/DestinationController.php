@@ -26,7 +26,7 @@ class DestinationController extends Controller
         $destination = Destination::create($request->validated());
 
         return response()->json([
-            'message' => 'Destination created successfully.',
+            'message' => 'Galamērķis izveidots.',
             'data' => new DestinationResource($destination),
         ], 201);
     }
@@ -37,6 +37,7 @@ class DestinationController extends Controller
     public function show(string $id)
     {
         $destination = Destination::with('place')->findOrFail($id);
+
         return new DestinationResource($destination);
     }
 

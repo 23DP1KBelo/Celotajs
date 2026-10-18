@@ -44,7 +44,7 @@ class UserController extends Controller
         $user->save();
 
         return response()->json([
-            'message' => 'Password changed successfully.',
+            'message' => 'Parole ir nomainīta',
         ]);
     }
 
@@ -59,7 +59,7 @@ class UserController extends Controller
         $user->save();
 
         return response()->json([
-            'message' => 'Email updated successfully.',
+            'message' => 'E-pasts ir nomainīts.',
             'user' => $user,
         ]);
     }
@@ -75,7 +75,7 @@ class UserController extends Controller
         $user->delete();
 
         return response()->json([
-            'message' => 'User deleted successfully.',
+            'message' => 'Lietotājs ir dzēsts.',
         ]);
     }
 }

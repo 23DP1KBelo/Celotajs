@@ -153,7 +153,7 @@ class TripDestinationController extends Controller
             ->where('destination_id', $id)
             ->firstOrFail();
 
-        return response()->json($tripDestination);
+        return new TripDestinationResource($tripDestination);
     }
 
     /**

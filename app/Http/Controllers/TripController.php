@@ -138,12 +138,14 @@ class TripController extends Controller
     /**
      * Display one trip.
      */
-    public function show(string $id)
-    {
-        $trip = Trip::findOrFail($id);
+        public function show(string $id)
+        {
+            $trip = Trip::with([
+                'tripDestinations.destination.place.country',
+            ])->findOrFail($id);
 
-        return new TripResource($trip);
-    }
+            return new TripResource($trip);
+        }
 
     /**
      * Update a trip and optionally replace its image.

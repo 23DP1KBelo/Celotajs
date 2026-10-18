@@ -12,15 +12,21 @@ class TripDestinationResource extends JsonResource
      *
      * @return array<string, mixed>
      */
-    public function toArray(Request $request): array
+        public function toArray(Request $request): array
     {
         return [
             'id' => $this->id,
             'trip_id' => $this->trip_id,
             'destination_id' => $this->destination_id,
             'recommendations' => $this->recommendations,
-            'image' => $this->image,
-            'destination' => new DestinationResource($this->whenLoaded('destination')),
+
+            'trip' => new TripResource(
+                $this->whenLoaded('trip')
+            ),
+
+            'destination' => new DestinationResource(
+                $this->whenLoaded('destination')
+            ),
         ];
     }
 }
