@@ -69,7 +69,7 @@
             </div>
             <form class="account__form" @submit.prevent="saveChanges">
                 <label class="field">
-                    <span>FULL NAME</span>
+                    <span>USERNAME</span>
                     <input :value="username" type="text" placeholder="YOUR NAME" readonly>
                 </label>
                 <label class="field">
