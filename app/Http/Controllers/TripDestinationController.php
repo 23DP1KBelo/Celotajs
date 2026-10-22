@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\DestinationResource;
 use App\Http\Resources\TripDestinationResource;
 use App\Models\Destination;
+use App\Models\Trip;
 use App\Models\TripDestination;
 use App\Http\Requests\TripDestinationRequest;
 use Illuminate\Http\Request;
@@ -131,6 +132,13 @@ class TripDestinationController extends Controller
      */
     public function store(TripDestinationRequest $request)
     {
+        // Galamērķi drīkst pievienot tikai savam ceļojumam
+        if ((int) Trip::findOrFail($request->trip_id)->user_id !== $request->user()->id) {
+            return response()->json([
+                'message' => 'Šis ceļojums tev nepieder.',
+            ], 403);
+        }
+
         $tripDestination = TripDestination::create(
             $request->validated()
         );

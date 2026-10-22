@@ -27,38 +27,32 @@
                     <div class="row">
                         <div class="field">
                             <label for="country">{{ $t('common.country') }}</label>
-                            <input id="country" v-model.trim="form.country" type="text" :placeholder="$t('add.countryPlaceholder')">
-                            <small v-if="errors.country" class="field__error">{{ errors.country[0] }}</small>
+                            <div class="select">
+                                <select id="country" v-model="form.country_id">
+                                    <option value="" disabled>{{ $t('add.chooseCountry') }}</option>
+                                    <option v-for="country in countries" :key="country.id" :value="country.id">
+                                        {{ country.name.toUpperCase() }}
+                                    </option>
+                                </select>
+                                <span class="select__arrow" aria-hidden="true">V</span>
+                            </div>
+                            <small v-if="errors.country_id" class="field__error">{{ errors.country_id[0] }}</small>
                         </div>
 
                         <div class="field">
                             <label for="city">{{ $t('common.city') }}</label>
-                            <input id="city" v-model.trim="form.city" type="text" :placeholder="$t('add.cityPlaceholder')">
-                            <small v-if="errors.city" class="field__error">{{ errors.city[0] }}</small>
+                            <div class="select">
+                                <select id="city" v-model="form.places_id" :disabled="!form.country_id">
+                                    <option value="" disabled>{{ $t('add.chooseCity') }}</option>
+                                    <option v-for="place in places" :key="place.id" :value="place.id">
+                                        {{ place.name.toUpperCase() }}
+                                    </option>
+                                </select>
+                                <span class="select__arrow" aria-hidden="true">V</span>
+                            </div>
+                            <small v-if="errors.places_id" class="field__error">{{ errors.places_id[0] }}</small>
                         </div>
                     </div>
-
-                    <div class="field">
-                        <label for="category">{{ $t('common.category') }}</label>
-                        <div class="select">
-                            <select id="category" v-model="form.category">
-                                <option value="" disabled>{{ $t('common.chooseCategory') }}</option>
-                                <option v-for="item in categories" :key="item.value" :value="item.value">
-                                    {{ $t(item.label) }}
-                                </option>
-                            </select>
-                            <span class="select__arrow" aria-hidden="true">V</span>
-                        </div>
-                        <small v-if="errors.category" class="field__error">{{ errors.category[0] }}</small>
-                    </div>
-
-                    <fieldset class="field status">
-                        <legend>{{ $t('common.status') }}</legend>
-                        <label v-for="item in statuses" :key="item.value" class="status__option">
-                            <input v-model="form.status" type="radio" name="status" :value="item.value">
-                            <span>{{ $t(item.label) }}</span>
-                        </label>
-                    </fieldset>
 
                     <!-- Trip: existing or new -->
                     <fieldset class="field status">
@@ -80,7 +74,7 @@
                             <select id="trip" v-model="form.trip_id">
                                 <option value="" disabled>{{ $t('add.chooseTrip') }}</option>
                                 <option v-for="trip in trips" :key="trip.id" :value="trip.id">
-                                    {{ trip.name }}
+                                    {{ trip.title }}
                                 </option>
                             </select>
                             <span class="select__arrow" aria-hidden="true">V</span>
@@ -111,6 +105,28 @@
                             />
                             <small v-if="errors.trip_description" class="field__error">{{ errors.trip_description[0] }}</small>
                         </div>
+
+                        <div class="field">
+                            <label for="category">{{ $t('common.category') }}</label>
+                            <div class="select">
+                                <select id="category" v-model="form.category">
+                                    <option value="" disabled>{{ $t('common.chooseCategory') }}</option>
+                                    <option v-for="item in categories" :key="item.value" :value="item.value">
+                                        {{ $t(item.label) }}
+                                    </option>
+                                </select>
+                                <span class="select__arrow" aria-hidden="true">V</span>
+                            </div>
+                            <small v-if="errors.category" class="field__error">{{ errors.category[0] }}</small>
+                        </div>
+
+                        <fieldset class="field status">
+                            <legend>{{ $t('common.status') }}</legend>
+                            <label v-for="item in statuses" :key="item.value" class="status__option">
+                                <input v-model="form.status" type="radio" name="status" :value="item.value">
+                                <span>{{ $t(item.label) }}</span>
+                            </label>
+                        </fieldset>
                     </div>
 
                     <!-- Visibility -->
@@ -134,7 +150,7 @@
                         <small v-if="errors.description" class="field__error">{{ errors.description[0] }}</small>
                     </div>
 
-                    <div class="field">
+                    <div v-if="tripMode === 'new'" class="field">
                         <label for="image">{{ $t('add.photo') }}</label>
                         <label class="drop" :class="{ 'drop--filled': preview }" for="image">
                             <img v-if="preview" :src="preview" :alt="$t('add.photoAlt')">
@@ -163,10 +179,10 @@ import { auth } from '../../auth.js'
 
 const emptyForm = () => ({
     title: '',
-    country: '',
-    city: '',
+    country_id: '',
+    places_id: '',
     category: '',
-    status: 'not_visited',
+    status: 'unvisited',
     description: '',
     visibility: 'private',
     trip_id: '',
@@ -184,18 +200,21 @@ export default {
             preview: '',
 
             categories: [
-                { value: 'Daba', label: 'categories.nature' },
-                { value: 'Atpūta', label: 'categories.rest' },
-                { value: 'Izklaide', label: 'categories.adventure' }
+                { value: 'nature', label: 'categories.nature' },
+                { value: 'rest', label: 'categories.rest' },
+                { value: 'adventure', label: 'categories.adventure' }
             ],
             statuses: [
-                { value: 'not_visited', label: 'common.notVisited' },
+                { value: 'unvisited', label: 'common.notVisited' },
                 { value: 'visited', label: 'common.visited' }
             ],
             visibilities: [
                 { value: 'private', label: 'add.private' },
                 { value: 'public', label: 'add.public' }
             ],
+
+            countries: [],
+            places: [],
 
             // user's trips come from GET /api/user/trips
             trips: [],
@@ -225,8 +244,18 @@ export default {
             immediate: true,
             handler(value) {
                 if (value) {
+                    this.loadCountries()
                     this.loadTrips()
                 }
+            }
+        },
+
+        'form.country_id'(countryId) {
+            this.form.places_id = ''
+            this.places = []
+
+            if (countryId) {
+                this.loadPlaces(countryId)
             }
         }
     },
@@ -236,11 +265,44 @@ export default {
     },
 
     methods: {
+        getAuthConfig() {
+            const token = localStorage.getItem('token')
+
+            if (!token) {
+                throw new Error('AUTH_REQUIRED')
+            }
+
+            return {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/json'
+                }
+            }
+        },
+
+        async loadCountries() {
+            try {
+                const { data } = await axios.get('/api/countries/search', this.getAuthConfig())
+                this.countries = data.data
+            } catch (error) {
+                console.log(error.response)
+            }
+        },
+
+        async loadPlaces(countryId) {
+            try {
+                const { data } = await axios.get(`/api/countries/${countryId}/places`, this.getAuthConfig())
+                this.places = data.data
+            } catch (error) {
+                console.log(error.response)
+            }
+        },
+
         async loadTrips() {
             try {
-                const { data } = await axios.get('/api/user/trips', { withCredentials: true })
+                const { data } = await axios.get('/api/user/trips', this.getAuthConfig())
 
-                this.trips = Array.isArray(data) ? data : (data.trips || [])
+                this.trips = Array.isArray(data) ? data : (data.data || [])
             } catch (error) {
                 console.log(error.response)
                 this.trips = []
@@ -280,7 +342,7 @@ export default {
 
         validate() {
             const errors = {}
-            const required = ['title', 'country', 'city', 'category']
+            const required = ['title', 'country_id', 'places_id']
 
             required.forEach((key) => {
                 if (!this.form[key]) {
@@ -294,6 +356,10 @@ export default {
 
             if (this.tripMode === 'new' && !this.form.trip_name) {
                 errors.trip_name = [this.$t('add.tripNameError')]
+            }
+
+            if (this.tripMode === 'new' && !this.form.category) {
+                errors.category = [this.$t('add.required')]
             }
 
             this.errors = errors
@@ -310,35 +376,48 @@ export default {
             this.loading = true
 
             try {
-                // image goes with the text fields, so use FormData (multipart)
-                const data = new FormData()
+                const config = this.getAuthConfig()
 
-                ;['title', 'country', 'city', 'category', 'status', 'description'].forEach((key) => {
-                    data.append(key, this.form[key])
-                })
+                // 1. the destination itself
+                const { data: created } = await axios.post('/api/destinations', {
+                    title: this.form.title,
+                    description: this.form.description,
+                    places_id: this.form.places_id
+                }, config)
 
-                data.append('is_public', this.form.visibility === 'public' ? '1' : '0')
+                // 2. a new trip, if chosen (category, status and photo belong to the trip)
+                let tripId = this.form.trip_id
 
-                if (this.tripMode === 'existing') {
-                    data.append('trip_id', this.form.trip_id)
-                } else {
-                    data.append('trip_name', this.form.trip_name)
-                    data.append('trip_description', this.form.trip_description)
+                if (this.tripMode === 'new') {
+                    const trip = new FormData()
+
+                    trip.append('title', this.form.trip_name)
+                    trip.append('description', this.form.trip_description)
+                    trip.append('category', this.form.category)
+                    trip.append('status', this.form.status)
+
+                    if (this.file) {
+                        trip.append('image', this.file)
+                    }
+
+                    const { data } = await axios.post('/api/trips', trip, config)
+                    tripId = data.trip.id
                 }
 
-                if (this.file) {
-                    data.append('image', this.file)
-                }
-
-                await axios.get('/sanctum/csrf-cookie', { withCredentials: true })
-                await axios.post('/api/destinations', data, { withCredentials: true })
+                // 3. link them; "public" means it is shown on Discover
+                await axios.post('/api/trip-destinations', {
+                    trip_id: tripId,
+                    destination_id: created.data.id,
+                    recommendations: this.form.visibility === 'public'
+                }, config)
 
                 this.success = true
                 this.message = this.$t('add.added')
                 this.form = emptyForm()
                 this.file = null
                 this.clearPreview()
-                document.getElementById('image').value = ''
+                const imageInput = document.getElementById('image')
+                if (imageInput) imageInput.value = ''
 
                 // a newly created trip should now appear in the list
                 await this.loadTrips()
