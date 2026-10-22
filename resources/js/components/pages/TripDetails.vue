@@ -186,6 +186,9 @@ if (!trip || !trip.id) {
 
     this.trip = trip
     this.destinations = Array.isArray(destinations) ? destinations : []
+    this.trip = trip
+this.destinations = Array.isArray(destinations) ? destinations : []
+
                 } catch (error) {
                     console.error(
                         'Failed to load trip:',

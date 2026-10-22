@@ -1,9 +1,12 @@
+```vue
 <template>
     <main class="place">
         <transition name="toast">
             <div v-if="toast" class="toast" role="alert">
                 <span>{{ $t('destination.registerToAdd') }}</span>
-                <router-link to="/register">{{ $t('destination.register') }}</router-link>
+                <router-link to="/register">
+                    {{ $t('destination.register') }}
+                </router-link>
             </div>
         </transition>
 
@@ -52,7 +55,11 @@
                         :disabled="added"
                         @click="addToList"
                     >
-                        {{ added ? $t('destination.inList') : $t('destination.addToList') }}
+                        {{
+                            added
+                                ? $t('destination.inList')
+                                : $t('destination.addToList')
+                        }}
                     </button>
                 </header>
 
@@ -67,7 +74,9 @@
                     {{ place.description || $t('destination.noDescription') }}
                 </p>
 
-                <h2 class="place__sub">{{ $t('destination.basicInfo') }}</h2>
+                <h2 class="place__sub">
+                    {{ $t('destination.basicInfo') }}
+                </h2>
 
                 <dl class="info">
                     <div class="info__row">
@@ -82,7 +91,13 @@
 
                     <div class="info__row">
                         <dt>{{ $t('common.category') }}</dt>
-                        <dd>{{ place.category ? $t(`categories.${place.category}`) : '—' }}</dd>
+                        <dd>
+                            {{
+                                place.category
+                                    ? $t(`categories.${place.category}`)
+                                    : '—'
+                            }}
+                        </dd>
                     </div>
                 </dl>
 
@@ -95,6 +110,7 @@
                 {{ $t('destination.notFound') }}
             </p>
         </div>
+
         <AddDestinationToTripDialog
             v-if="place"
             v-model="showTripDialog"
@@ -110,11 +126,13 @@ import { auth } from '../../auth.js'
 import AddDestinationToTripDialog from '../pages/AddDestinationToTripDialog.vue'
 
 export default {
+    name: 'Destination',
+
     components: {
         AddDestinationToTripDialog
     },
+
     data() {
-        
         return {
             place: null,
             added: false,
@@ -122,7 +140,6 @@ export default {
             error: '',
             toast: false,
             showTripDialog: false
-
         }
     },
 
@@ -146,49 +163,104 @@ export default {
             this.place = null
 
             try {
+                const routeId = this.$route.params.id
+
+                if (!routeId) {
+                    this.error = 'destination.notFound'
+                    return
+                }
+
                 const response = await axios.get(
-                    `/api/trip/destinations/${this.$route.params.id}`
+                    `/api/trip/destinations/${routeId}`,
+                    {
+                        headers: {
+                            Accept: 'application/json'
+                        }
+                    }
                 )
 
-                const data = response.data
-                const destination = data.destination || {}
-                const location = destination.place || {}
-                const country = location.country || {}
-                const trip = data.trip || {}
+                console.log(
+                    'Destination API response:',
+                    response.data
+                )
 
+                // API var atgriezt { destination: ... }
+                // vai { data: { destination: ... } } formātā.
+                const payload =
+                    response.data?.data ?? response.data
+
+                if (
+                    typeof payload === 'string' &&
+                    payload.trimStart().startsWith('<')
+                ) {
+                    throw new Error(
+                        'API atgrieza HTML, nevis JSON. Pārbaudi API maršrutu.'
+                    )
+                }
+
+                const destination = payload?.destination ?? {}
+
+                const location =
+                    destination.place ??
+                    destination.location ??
+                    {}
+
+                const country =
+                    location.country ??
+                    destination.country ??
+                    {}
+
+                const trip = payload?.trip ?? {}
+
+                // Izmanto īsto galamērķa ID, nevis ieteikuma ieraksta ID.
                 const destinationId =
-                    destination.id ||
-                    data.destination_id ||
-                    data.id ||
-                    this.$route.params.id
+                    destination.id ??
+                    payload?.destination_id ??
+                    routeId
+
+                const countryName =
+                    typeof country === 'object'
+                        ? country.name ?? ''
+                        : country
+
+                const cityName =
+                    typeof destination.city === 'string'
+                        ? destination.city
+                        : typeof location.city === 'string'
+                            ? location.city
+                            : location.name ?? ''
 
                 this.place = {
                     id: destinationId,
 
                     title:
-                        destination.title ||
-                        destination.name ||
-                        location.name ||
+                        destination.title ??
+                        destination.name ??
+                        location.name ??
                         'Travel destination',
 
-                    city: location.name || '',
+                    city: cityName,
 
-                    country: country.name || '',
+                    country: countryName,
 
-                    category: trip.category || destination.category || '',
+                    category:
+                        destination.category ??
+                        trip.category ??
+                        '',
 
                     description:
-                        destination.description ||
-                        location.description ||
-                        trip.description ||
+                        destination.description ??
+                        location.description ??
                         '',
 
                     image:
-                        destination.image ||
-                        location.image ||
-                        trip.image ||
+                        destination.image ??
+                        destination.image_url ??
+                        location.image ??
                         `https://picsum.photos/seed/destination-${destinationId}/1200/600`
                 }
+
+                console.log('Loaded destination:', this.place)
             } catch (error) {
                 console.error(
                     'Failed to load destination:',
@@ -208,7 +280,7 @@ export default {
             const fallback =
                 `https://picsum.photos/seed/fallback-${this.place?.id || 'travel'}/1200/600`
 
-            if (event.target.src !== fallback) {
+            if (!event.target.src.includes('picsum.photos/seed/fallback-')) {
                 event.target.src = fallback
             }
         },
@@ -264,7 +336,6 @@ export default {
     text-decoration: none;
 }
 
-
 .place__head {
     display: flex;
     align-items: flex-end;
@@ -316,7 +387,6 @@ export default {
     outline-offset: 3px;
 }
 
-/* ---------- Image + text ---------- */
 .place__img {
     display: block;
     width: 100%;
@@ -332,7 +402,6 @@ export default {
     font-size: 1.15rem;
     line-height: 1.5;
 }
-
 
 .place__sub {
     margin: 0 0 1.6rem;
@@ -416,7 +485,6 @@ export default {
     transform: translate(-50%, -1rem);
 }
 
-/* ---------- Mobile ---------- */
 @media (max-width: 700px) {
     .place__head {
         flex-direction: column;
@@ -434,3 +502,4 @@ export default {
     }
 }
 </style>
+```
