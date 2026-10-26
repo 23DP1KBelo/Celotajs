@@ -281,7 +281,7 @@ Sadaļā **„MY TRIPS”** lietotājs var filtrēt savus ceļojumus pēc to sta
 
 Lietotājam ir iespēja izveidot jaunu ceļojumu, izmantojot pogu **„+ ADD TRIP”**.
 
-![Izveidot ceļojumu](ReadMe-img/celojuma_forma.png)
+![Izveidot ceļojumu](ReadMe-img/Celojuma_forma.png)
 
 #### Izveides soļi:
 
@@ -301,7 +301,7 @@ Lietotājs var dzēst iepriekš izveidotus ceļojumus, kuri vairs nav nepiecieš
 
 ### **4. Ceļojuma statusa maiņa**
 Ceļojuma statusa maiņa ir pieejama lietotāja profila sadaļā **„MY TRIPS” (Mani ceļojumi)**. 
-![Ceļojuma statusa maiņa](ReadMe-img/statusa_maina_ceļojums.png)
+![Ceļojuma statusa maiņa](ReadMe-img/Statusa_maina_ceļojums.png)
 Katra ceļojuma kartītes augšējā labajā stūrī tiek attēlots tā pašreizējais statuss.
 #### **1. Ceļojuma statusa maiņa**
 #### Statusa maiņas soļi:
