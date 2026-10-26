@@ -653,9 +653,9 @@ Katram galamērķim tiek attēlota šāda informācija:
    - **Valsts** – piemēram, „Latvia”.
    ![Galamērķu meklēšana valsts](ReadMe-img/galamerki_meklet.png)
    - **Pilsēta** – piemēram, „Riga”.
-    ![Galamērķu meklēšana pilseta](ReadMe-img/galamerka_meklesana1.png)
+    ![Galamērķu meklēšana pilseta](ReadMe-img/Galamerka_meklesana1.png)
    - **Galamērķa nosaukums** – piemēram, „Freedom Monument”.
-    ![Galamērķu meklēšana nosaukums](ReadMe-img/galamerka_meklesana2.png)
+    ![Galamērķu meklēšana nosaukums](ReadMe-img/Galamerka_meklesana2.png)
 4. Tiek attēloti galamērķi, kas atbilst ievadītajam meklēšanas tekstam.
 
 #### 2.2. Galamērķa rediģēšana
