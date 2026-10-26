@@ -256,8 +256,6 @@ export default {
 
                         image:
                             destination.image ||
-                            place.image ||
-                            trip.image ||
                             `https://picsum.photos/seed/destination-${destination.id || item.destination_id || item.id}/600/350`
                     }
                 })

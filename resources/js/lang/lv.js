@@ -166,6 +166,22 @@ export default {
     },
 
     profile: {
+        savedPlaces: 'SAGLABĀTĀS VIETAS',
+        countries: 'VALSTIS',
+        deleting: 'DZĒŠ...',
+        deleteTrip: 'DZĒST CEĻOJUMU',
+        photoOptional: 'NEOBLIGĀTI · JPG / PNG · MAKS. 2 MB',
+        photoPreview: 'Ceļojuma foto priekšskatījums',
+        tripCover: 'CEĻOJUMA VĀKS',
+        changePhoto: 'MAINĪT FOTO',
+        removePhoto: 'NOŅEMT',
+        addCover: 'PIEVIENOT VĀKA FOTO',
+        choosePhoto: 'IZVĒLIES FOTO NO IERĪCES',
+        statusFailed: 'Neizdevās mainīt ceļojuma statusu.',
+        tripDeleted: 'CEĻOJUMS IZDZĒSTS',
+        tripDeleteFailed: 'NEIZDEVĀS DZĒST CEĻOJUMU',
+        deleteTripConfirm: 'Vai tiešām dzēst ceļojumu "{name}"? Šo darbību nevar atsaukt.',
+        thisTrip: 'šo ceļojumu',
         heroText: 'Tavas saglabātās vietas, apmeklētās vietas un viss par tavu kontu vienuviet.',
         title: 'PROFILS',
         memberSince: 'LIETOTĀJS KOPŠ {year}',
@@ -250,5 +266,21 @@ export default {
         somethingWrong: 'KAUT KAS NOGĀJA GREIZI',
         confirmDeleteUser: 'Vai tiešām dzēst lietotāju "{name}"? Tiks dzēsti arī visi viņa ceļojumi.',
         confirmDeleteDestination: 'Vai tiešām dzēst galamērķi "{name}"? Tas tiks noņemts arī no visiem ceļojumiem.'
-    }
+    },
+    tripDetails: {
+        loading: 'IELĀDĒ CEĻOJUMU...',
+        backToTrips: '← ATPAKAĻ PIE MANIEM CEĻOJUMIEM',
+        travelCollection: 'TAVA CEĻOJUMU KOLEKCIJA',
+        dateFrom: 'SĀKUMA DATUMS',
+        dateTill: 'BEIGU DATUMS',
+        budget: 'BUDŽETS',
+        category: 'KATEGORIJA',
+        yourCollection: 'TAVA KOLEKCIJA',
+        destinations: 'GALAMĒRĶI',
+        places: '{count} VIETAS',
+        noDestinations: 'ŠIM CEĻOJUMAM VĒL NAV PIEVIENOTI GALAMĒRĶI.',
+        notFound: 'CEĻOJUMS NAV ATRASTS',
+        loadError: 'NEIZDEVĀS IELĀDĒT CEĻOJUMU',
+        untitledDestination: 'GALAMĒRĶIS BEZ NOSAUKUMA'
+    },
 }

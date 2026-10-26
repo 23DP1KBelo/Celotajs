@@ -1,3 +1,4 @@
+
 <template>
     <main class="register">
         <aside class="register__photo">
@@ -22,10 +23,11 @@
                         <label for="name">{{ $t('common.username') }}</label>
                         <input
                             id="name"
-                            v-model="Username"
+                            v-model.trim="Username"
                             type="text"
-                            autocomplete="name"
+                            autocomplete="username"
                             :placeholder="$t('common.yourName')"
+                            required
                         >
                     </div>
 
@@ -33,10 +35,11 @@
                         <label for="email">{{ $t('common.email') }}</label>
                         <input
                             id="email"
-                            v-model="email"
+                            v-model.trim="email"
                             type="email"
                             autocomplete="email"
                             :placeholder="$t('common.emailPlaceholder')"
+                            required
                         >
                     </div>
 
@@ -48,6 +51,8 @@
                             type="password"
                             autocomplete="new-password"
                             placeholder="••••••••••"
+                            required
+                            minlength="8"
                         >
                     </div>
 
@@ -55,8 +60,12 @@
                         {{ message }}
                     </p>
 
-                    <button type="submit" class="register__submit">
-                        {{ $t('register.submit') }}
+                    <button
+                        type="submit"
+                        class="register__submit"
+                        :disabled="loading"
+                    >
+                        {{ loading ? '...' : $t('register.submit') }}
                     </button>
 
                     <p class="register__signin">
@@ -73,45 +82,65 @@
 import axios from 'axios'
 
 export default {
+    name: 'Register',
+
     data() {
         return {
             Username: '',
             email: '',
             password: '',
-            message: ''
+            message: '',
+            loading: false
         }
     },
 
     methods: {
         async register() {
-            try {
-                await axios.get('/sanctum/csrf-cookie', {
-                    withCredentials: true
-                })
+            if (this.loading) return
 
+            this.message = ''
+            this.loading = true
+
+            try {
                 const response = await axios.post('/api/register', {
                     Username: this.Username,
                     email: this.email,
-                    password: this.password,
+                    password: this.password
                 }, {
-                    withCredentials: true
+                    headers: {
+                        Accept: 'application/json'
+                    }
                 })
 
-                console.log(response.data)
+                console.log('Registration successful:', response.data)
 
-                this.message = this.$t('register.success')
-                this.$router.push('/login')
+                this.password = ''
 
+                // Konts izveidots — pārejam uz pieteikšanās lapu.
+                await this.$router.push('/login')
             } catch (error) {
-                console.log(error.response)
+                console.error(
+                    'Registration error:',
+                    error.response?.data ?? error.message
+                )
 
-                this.message =
-                    error.response?.data?.message || this.$t('register.failed')
+                const errors = error.response?.data?.errors
+
+                if (errors) {
+                    this.message = Object.values(errors).flat().join(' ')
+                } else {
+                    this.message =
+                        error.response?.data?.message ||
+                        this.$t('register.failed')
+                }
+            } finally {
+                this.loading = false
             }
         }
     }
 }
 </script>
+
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Italiana&family=Jost:wght@300;400&display=swap');

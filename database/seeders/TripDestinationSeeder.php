@@ -26,7 +26,7 @@ class TripDestinationSeeder extends Seeder
                 TripDestination::create([
                     'trip_id' => $trip->id,
                     'destination_id' => $destination->id,
-                    'recommendations' => fake()->boolean(),
+                    'recommendations' => true,
                 ]);
             }
         }

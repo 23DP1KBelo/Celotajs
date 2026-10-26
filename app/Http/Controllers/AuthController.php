@@ -6,7 +6,6 @@ use App\Http\Requests\UserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -20,36 +19,39 @@ class AuthController extends Controller
             'role' => 'user',
         ]);
 
-        Auth::login($user);
-
-        $request->session()->regenerate();
-
+        // Kontu izveidojam, bet automātiski nepiesakām.
         return response()->json([
             'message' => 'Reģistrācija veiksmīga!',
             'user' => new UserResource($user),
         ], 201);
     }
 
-   public function login(Request $request)
+    public function login(Request $request)
     {
         $credentials = $request->validate([
             'Username' => 'required|string',
             'password' => 'required|string',
         ]);
 
-        $user = User::where('Username', $credentials['Username'])->first();
+        $user = User::where(
+            'Username',
+            $credentials['Username']
+        )->first();
 
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+        if (
+            !$user ||
+            !Hash::check($credentials['password'], $user->password)
+        ) {
             return response()->json([
-                'message' => 'Invalid username or password.'
+                'message' => 'Nepareizs lietotājvārds vai parole.',
             ], 401);
         }
 
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
-            'message' => 'Login successful.',
-            'user' => $user,
+            'message' => 'Pieteikšanās veiksmīga!',
+            'user' => new UserResource($user),
             'token' => $token,
         ]);
     }
@@ -60,12 +62,14 @@ class AuthController extends Controller
             'user' => new UserResource($request->user()),
         ]);
     }
+
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
-      return response()->json([
+
+        return response()->json([
             'message' => 'Esat izrakstījies!',
-   
-       ]);
+        ]);
     }
 }
+

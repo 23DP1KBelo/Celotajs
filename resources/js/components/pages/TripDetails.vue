@@ -1,11 +1,15 @@
 
 <template>
     <main class="trip-details">
-        <p v-if="loading" class="trip-details__message">LOADING TRIP...</p>
+        <p v-if="loading" class="trip-details__message">
+            {{ $t('tripDetails.loading') }}
+        </p>
 
         <section v-else-if="error" class="trip-details__message">
-            <h1>{{ error }}</h1>
-            <router-link to="/profile">BACK TO MY TRIPS</router-link>
+            <h1>{{ $t(error) }}</h1>
+            <router-link to="/profile">
+                {{ $t('tripDetails.backToTrips') }}
+            </router-link>
         </section>
 
         <template v-else-if="trip">
@@ -18,18 +22,20 @@
                 }"
             >
                 <router-link to="/profile" class="trip-hero__back">
-                    ← BACK TO MY TRIPS
+                    {{ $t('tripDetails.backToTrips') }}
                 </router-link>
 
                 <span
                     class="card__badge"
                     :class="{ 'card__badge--dark': trip.status === 'visited' }"
                 >
-                    {{ trip.status === 'visited' ? 'VISITED' : 'WANT TO VISIT' }}
+                    {{ $t(trip.status === 'visited'
+                        ? 'common.visited'
+                        : 'common.wantToVisit') }}
                 </span>
 
                 <div class="trip-hero__content">
-                    <p>YOUR TRAVEL COLLECTION</p>
+                    <p>{{ $t('tripDetails.travelCollection') }}</p>
                     <h1>{{ trip.title || trip.name }}</h1>
                     <p v-if="trip.description">{{ trip.description }}</p>
                 </div>
@@ -37,22 +43,22 @@
 
             <section class="trip-info">
                 <div class="trip-info__item">
-                    <span>DATE FROM</span>
+                    <span>{{ $t('tripDetails.dateFrom') }}</span>
                     <strong>{{ formatDate(trip.date_from || trip.date_form) }}</strong>
                 </div>
 
                 <div class="trip-info__item">
-                    <span>DATE TILL</span>
+                    <span>{{ $t('tripDetails.dateTill') }}</span>
                     <strong>{{ formatDate(trip.date_till) }}</strong>
                 </div>
 
                 <div class="trip-info__item">
-                    <span>BUDGET</span>
+                    <span>{{ $t('tripDetails.budget') }}</span>
                     <strong>{{ formatBudget(trip.budget) }}</strong>
                 </div>
 
                 <div class="trip-info__item">
-                    <span>CATEGORY</span>
+                    <span>{{ $t('tripDetails.category') }}</span>
                     <strong>{{ formatCategory(trip.category) }}</strong>
                 </div>
             </section>
@@ -60,14 +66,16 @@
             <section class="trip-places">
                 <div class="trip-places__heading">
                     <div>
-                        <p>YOUR COLLECTION</p>
-                        <h2>DESTINATIONS</h2>
+                        <p>{{ $t('tripDetails.yourCollection') }}</p>
+                        <h2>{{ $t('tripDetails.destinations') }}</h2>
                     </div>
-                    <span>{{ destinations.length }} PLACES</span>
+                    <span>
+                        {{ $t('tripDetails.places', { count: destinations.length }) }}
+                    </span>
                 </div>
 
                 <p v-if="!destinations.length" class="trip-details__message">
-                    NO DESTINATIONS ADDED TO THIS TRIP YET.
+                    {{ $t('tripDetails.noDestinations') }}
                 </p>
 
                 <ul v-else class="grid">
@@ -88,6 +96,7 @@
                                 {{ getDestinationName(item) }}
                             </span>
                         </router-link>
+
                         <article
                             v-else
                             class="card destination-card"
@@ -110,6 +119,7 @@
 
 <script>
 import axios from 'axios'
+import { i18n } from '../../i18n.js'
 
 export default {
     data() {
@@ -118,6 +128,12 @@ export default {
             destinations: [],
             loading: true,
             error: ''
+        }
+    },
+
+    computed: {
+        currentLocale() {
+            return i18n.locale
         }
     },
 
@@ -144,68 +160,69 @@ export default {
                     return
                 }
 
+                const headers = {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/json'
+                }
+
                 const { data } = await axios.get(
                     `/api/trips/${this.$route.params.id}`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                            Accept: 'application/json'
-                        }
-                    }
+                    { headers }
                 )
 
                 let trip = data.trip || data.data || data
 
-if (!trip || !trip.id) {
-    throw new Error('Trip not found')
-}
-
-        let destinations =
-            trip.trip_destinations || trip.destinations || []
-
-        if (!Array.isArray(destinations) || destinations.length === 0) {
-            const response = await axios.get('/api/user/trips', {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    Accept: 'application/json'
+                if (!trip || !trip.id) {
+                    throw new Error('Trip not found')
                 }
-            })
 
-            const trips = response.data.data || response.data
-            const fullTrip = Array.isArray(trips)
-                ? trips.find(item => Number(item.id) === Number(trip.id))
-                : null
+                let destinations =
+                    trip.trip_destinations || trip.destinations || []
 
-            if (fullTrip) {
-                trip = { ...trip, ...fullTrip }
-
-                destinations =
-                    fullTrip.trip_destinations || fullTrip.destinations || []
-            }
-        }
-
-    this.trip = trip
-    this.destinations = Array.isArray(destinations) ? destinations : []
-    this.trip = trip
-this.destinations = Array.isArray(destinations) ? destinations : []
-
-                } catch (error) {
-                    console.error(
-                        'Failed to load trip:',
-                        error.response?.data || error.message
+                if (!Array.isArray(destinations) || destinations.length === 0) {
+                    const response = await axios.get(
+                        '/api/user/trips',
+                        { headers }
                     )
 
-                    if (error.response?.status === 401) {
-                        await this.$router.push('/login')
-                    } else if (error.response?.status === 404) {
-                        this.error = 'TRIP NOT FOUND'
-                    } else {
-                        this.error = 'FAILED TO LOAD TRIP'
+                    const trips = response.data.data || response.data
+
+                    const fullTrip = Array.isArray(trips)
+                        ? trips.find(item => Number(item.id) === Number(trip.id))
+                        : null
+
+                    if (fullTrip) {
+                        trip = { ...trip, ...fullTrip }
+
+                        destinations =
+                            fullTrip.trip_destinations ||
+                            fullTrip.destinations ||
+                            []
                     }
-                } finally {
-                    this.loading = false
                 }
-            },
+
+                this.trip = trip
+                this.destinations = Array.isArray(destinations)
+                    ? destinations
+                    : []
+
+            } catch (error) {
+                console.error(
+                    'Failed to load trip:',
+                    error.response?.data || error.message
+                )
+
+                if (error.response?.status === 401) {
+                    await this.$router.push('/login')
+                } else if (error.response?.status === 404) {
+                    this.error = 'tripDetails.notFound'
+                } else {
+                    this.error = 'tripDetails.loadError'
+                }
+            } finally {
+                this.loading = false
+            }
+        },
 
         getDestination(item) {
             return item?.destination || item?.place || item || {}
@@ -213,7 +230,11 @@ this.destinations = Array.isArray(destinations) ? destinations : []
 
         getDestinationId(item) {
             const destination = this.getDestination(item)
-            return destination.id || item?.destination_id || item?.id || null
+
+            return destination.id ||
+                item?.destination_id ||
+                item?.id ||
+                null
         },
 
         getDestinationName(item) {
@@ -223,52 +244,57 @@ this.destinations = Array.isArray(destinations) ? destinations : []
                 destination.title ||
                 destination.place?.name ||
                 destination.place?.title ||
-                'UNTITLED DESTINATION'
+                this.$t('tripDetails.untitledDestination')
         },
 
         getDestinationImage(item) {
-            const destination = item?.destination || item?.place || item
+            const destination = this.getDestination(item)
 
-            const place = destination?.place || destination
-
-            return (
-                destination?.image ||
-                destination?.photo ||
-                destination?.cover_image ||
-                place?.image ||
-                place?.photo ||
-                place?.cover_image ||
-                item?.image ||
-                null
-            )
+            return destination?.image ||
+                `https://picsum.photos/seed/destination-${destination.id || item.destination_id || item.id}/600/350`
         },
 
         formatDate(value) {
-            if (!value) return 'NOT SPECIFIED'
+            if (!value) {
+                return this.$t('common.notSpecified')
+            }
 
             const date = new Date(`${value}T00:00:00`)
 
-            return Number.isNaN(date.getTime())
-                ? value
-                : date.toLocaleDateString('en-GB', {
+            if (Number.isNaN(date.getTime())) {
+                return value
+            }
+
+            return date.toLocaleDateString(
+                this.currentLocale === 'lv' ? 'lv-LV' : 'en-GB',
+                {
                     day: '2-digit',
                     month: 'short',
                     year: 'numeric'
-                })
+                }
+            )
         },
 
         formatBudget(value) {
             if (value === null || value === undefined || value === '') {
-                return 'NOT SPECIFIED'
+                return this.$t('common.notSpecified')
             }
 
             return `€${value}`
         },
 
         formatCategory(value) {
-            if (!value) return 'NOT SPECIFIED'
+            if (!value) {
+                return this.$t('common.notSpecified')
+            }
 
-            return value.charAt(0).toUpperCase() + value.slice(1)
+            const key = `categories.${value}`
+
+            const translated = this.$t(key)
+
+            return translated === key
+                ? value.charAt(0).toUpperCase() + value.slice(1)
+                : translated
         }
     }
 }

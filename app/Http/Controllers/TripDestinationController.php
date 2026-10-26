@@ -28,6 +28,7 @@ class TripDestinationController extends Controller
     {
         //
     }
+
     public function searchRecommendations(Request $request)
     {
         $request->validate([
@@ -56,7 +57,12 @@ class TripDestinationController extends Controller
             });
         }
 
-        return response()->json($query->get());
+        return response()->json(
+            $query->orderBy('id')
+                ->get()
+                ->unique('destination_id')
+                ->values()
+        );
     }
 
     // 2. Filtrēšana pēc kategorijas
@@ -76,7 +82,10 @@ class TripDestinationController extends Controller
                 'trip',
                 'destination.place.country',
             ])
-            ->get();
+            ->orderBy('id')
+            ->get()
+            ->unique('destination_id')
+            ->values();
 
         return response()->json($recommendations);
     }
@@ -124,7 +133,12 @@ class TripDestinationController extends Controller
             });
         }
 
-        return response()->json($query->get());
+        return response()->json(
+            $query->orderBy('id')
+                ->get()
+                ->unique('destination_id')
+                ->values()
+        );
     }
 
     /**

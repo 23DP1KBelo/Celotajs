@@ -166,6 +166,22 @@ export default {
     },
 
     profile: {
+        savedPlaces: 'SAVED PLACES',
+        countries: 'COUNTRIES',
+        deleting: 'DELETING...',
+        deleteTrip: 'DELETE TRIP',
+        photoOptional: 'OPTIONAL · JPG / PNG · MAX 2 MB',
+        photoPreview: 'Selected trip photo preview',
+        tripCover: 'YOUR TRIP COVER',
+        changePhoto: 'CHANGE PHOTO',
+        removePhoto: 'REMOVE',
+        addCover: 'ADD A COVER PHOTO',
+        choosePhoto: 'CHOOSE A PHOTO FROM YOUR DEVICE',
+        statusFailed: 'Failed to update trip status.',
+        tripDeleted: 'TRIP DELETED',
+        tripDeleteFailed: 'FAILED TO DELETE TRIP',
+        deleteTripConfirm: 'Delete trip "{name}"? This cannot be undone.',
+        thisTrip: 'this trip',
         heroText: 'Your saved places, your visited ones, and everything about your account in one place.',
         title: 'PROFILE',
         memberSince: 'MEMBER SINCE {year}',
@@ -250,5 +266,21 @@ export default {
         somethingWrong: 'SOMETHING WENT WRONG',
         confirmDeleteUser: 'Do you really want to delete the user "{name}"? All of their trips will be deleted too.',
         confirmDeleteDestination: 'Do you really want to delete the destination "{name}"? It will also be removed from all trips.'
-    }
+    },
+    tripDetails: {
+        loading: 'LOADING TRIP...',
+        backToTrips: '← BACK TO MY TRIPS',
+        travelCollection: 'YOUR TRAVEL COLLECTION',
+        dateFrom: 'DATE FROM',
+        dateTill: 'DATE TILL',
+        budget: 'BUDGET',
+        category: 'CATEGORY',
+        yourCollection: 'YOUR COLLECTION',
+        destinations: 'DESTINATIONS',
+        places: '{count} PLACES',
+        noDestinations: 'NO DESTINATIONS ADDED TO THIS TRIP YET.',
+        notFound: 'TRIP NOT FOUND',
+        loadError: 'FAILED TO LOAD TRIP',
+        untitledDestination: 'UNTITLED DESTINATION'
+    },
 }

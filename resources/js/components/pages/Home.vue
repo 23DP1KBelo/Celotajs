@@ -185,9 +185,8 @@ export default {
                         id: item.id,
                         name: [title, countryName].filter(Boolean).join(' | '),
                         image:
-                            destination.image ||
-                            place.image ||
-                            `https://picsum.photos/id/${imageId}/600/350`
+                            destination?.image ||
+                            `https://picsum.photos/seed/destination-${destination.id || item.destination_id || item.id}/600/350`
                     }
                 })
             } catch (error) {
