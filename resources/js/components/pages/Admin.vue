@@ -476,6 +476,7 @@ export default {
     font-size: clamp(2.6rem, 5.2vw, 4.5rem);
     line-height: 1.1;
     letter-spacing: 0.03em;
+    overflow-wrap: break-word;
 }
 
 .admin__intro p {
