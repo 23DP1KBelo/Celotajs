@@ -324,7 +324,7 @@ Nospiežot uz statusa pogas, iespējams pārslēgties starp šiem diviem statusi
 ### Ceļojuma apskate
 Wanderlist platformā reģistrētiem lietotājiem ir iespēja apskatīt detalizētu informāciju par saviem izveidotajiem ceļojumiem. Ceļojuma detalizētās apskates lapā tiek attēlota visa ar ceļojumu saistītā informācija, kā arī tam pievienotās apskates vietas.
 
-![Apskatīt ceļojumu](ReadMe-img/celojuma_apskate.png)
+![Apskatīt ceļojumu](ReadMe-img/Celojuma_apskate.png)
 
 Ceļojuma detalizētajai informācijai iespējams piekļūt lietotāja profila sadaļā **„MY TRIPS” (Mani ceļojumi)**.
 
@@ -407,7 +407,7 @@ Lietotājam ir iespēja dzēst savu Wanderlist kontu, izmantojot konta informāc
 
 Wanderlist platformā reģistrētiem lietotājiem sadaļā **„ATKLĀT”** ir pieejama papildu filtrēšanas funkcija, kas ļauj atlasīt galamērķus pēc to apmeklējuma statusa. Atšķirībā no nereģistrētiem lietotājiem, kuri var meklēt galamērķus un filtrēt tos pēc kategorijas, reģistrēti lietotāji var izmantot arī **statusa filtru**.
 
-![Filtrēšana pēc statusa](ReadMe-img/Statusa_filtresana.png)
+![Filtrēšana pēc statusa](ReadMe-img/statusa_filtresana.png)
 
 
 Statusa filtrēšana tiek veikta, pamatojoties uz konkrētā lietotāja ceļojumiem un tiem pievienotajiem galamērķiem.
