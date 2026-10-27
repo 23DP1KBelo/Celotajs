@@ -153,54 +153,66 @@ export default {
     },
 
     methods: {
-       async fetchDestinations() {
-            this.loading = true
-            this.error = ''
+async fetchDestinations() {
+    this.loading = true
+    this.error = ''
 
-            try {
-                const { data } = await axios.get(
-                    '/api/trip-destinations/recommendations'
-                )
+    try {
+        const { data } = await axios.get(
+            '/api/trip-destinations/recommendations'
+        )
 
-                if (!Array.isArray(data)) {
-                    throw new Error('Invalid API response')
-                }
+        if (!Array.isArray(data)) {
+            throw new Error('Invalid API response')
+        }
 
-                this.destinations = data.map((item, index) => {
-                    const destination = item.destination || {}
-                    const place = destination.place || {}
-                    const country = place.country || {}
+        const sortedDestinations = [...data].sort((a, b) => {
+            const dateA = new Date(
+                a.destination?.created_at || a.created_at || 0
+            ).getTime()
 
-                    const title =
-                        destination.title ||
-                        place.name ||
-                        'Travel destination'
+            const dateB = new Date(
+                b.destination?.created_at || b.created_at || 0
+            ).getTime()
 
-                    const countryName = country.name || ''
+            return dateB - dateA
+        })
 
-                    // Picsum attēls katrai kartei
-                    const imageId = Math.floor(Math.random() * 100) + 1
+        this.destinations = sortedDestinations.map(item => {
+            const destination = item.destination || {}
+            const place = destination.place || {}
+            const country = place.country || {}
 
-                    return {
-                        id: item.id,
-                        name: [title, countryName].filter(Boolean).join(' | '),
-                        image:
-                            destination?.image ||
-                            `https://picsum.photos/seed/destination-${destination.id || item.destination_id || item.id}/600/350`
-                    }
-                })
-            } catch (error) {
-                console.error(
-                    'Failed to load recommendations:',
-                    error.response?.data || error.message
-                )
+            const title =
+                destination.title ||
+                place.name ||
+                'Travel destination'
 
-                this.error = 'home.loadError'
-                this.destinations = []
-            } finally {
-                this.loading = false
+            const countryName = country.name || ''
+
+            return {
+                id: item.id,
+                name: [title, countryName]
+                    .filter(Boolean)
+                    .join(' | '),
+
+                image:
+                    destination.image ||
+                    `https://picsum.photos/seed/destination-${destination.id || item.destination_id || item.id}/600/350`
             }
-        },
+        })
+    } catch (error) {
+        console.error(
+            'Failed to load recommendations:',
+            error.response?.data || error.message
+        )
+
+        this.error = 'home.loadError'
+        this.destinations = []
+    } finally {
+        this.loading = false
+    }
+},
 
         scrollCards(direction) {
             const track = this.$refs.track

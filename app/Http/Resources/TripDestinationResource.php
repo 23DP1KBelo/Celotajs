@@ -19,6 +19,7 @@ class TripDestinationResource extends JsonResource
             'trip_id' => $this->trip_id,
             'destination_id' => $this->destination_id,
             'recommendations' => $this->recommendations,
+            'created_at' => $this->created_at,
 
             'trip' => new TripResource(
                 $this->whenLoaded('trip')
